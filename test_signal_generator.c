@@ -20,6 +20,14 @@
 #include<stdio.h>
 #include<ncurses.h>
 
+struct Menu {
+	WINDOW * window;
+	const char ** options;
+	const int size;
+	int selected_option;
+	// pointer to commands (function array)
+};
+
 long double string_to_long_double(char * string)
 {
 	errno = 0;
@@ -149,22 +157,22 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 	fclose(fp);
 }
 
-void draw_menu(WINDOW * menu_window, const char ** menu_items, const int menu_size, const int active_line)
+void draw_menu(struct Menu menu)
 {
-	for (int i = 0; i < menu_size; i++)
+	for (int i = 0; i < menu.size; i++)
 	{
-		if (i == active_line)
+		if (i == menu.selected_option)
 		{
-			wattron(menu_window, A_REVERSE);
-			mvwprintw(menu_window, 1 + i, 2, menu_items[i]);
-			wattroff(menu_window, A_REVERSE);
+			wattron(menu.window, A_REVERSE);
+			mvwprintw(menu.window, 1 + i, 2, menu.options[i]);
+			wattroff(menu.window, A_REVERSE);
 		}
 		else
 		{
-			mvwprintw(menu_window, 1 + i, 2, menu_items[i]);
+			mvwprintw(menu.window, 1 + i, 2, menu.options[i]);
 		}
 	}
-	wrefresh(menu_window);
+	wrefresh(menu.window);
 }
 
 int get_input(WINDOW * win)
@@ -207,9 +215,7 @@ int main(int argc, char** argv)
 	initscr();	// Init screen, setup memory and clear screen
 	cbreak();	// Unbuffered input, enables Ctrl + C to exit ncurses (default)
 	noecho();	// User input is not echoed
-
-	const char * edit_menu_items[] = EDIT_MENU_LIST;
-	const int edit_menu_length = sizeof(edit_menu_items) / sizeof(edit_menu_items[0]);
+			
 	int row_max, column_max; // Functions to get line/column coords
 	getmaxyx(stdscr, row_max, column_max);
 	if(row_max < 0 || column_max < 0)
@@ -223,6 +229,15 @@ int main(int argc, char** argv)
 			MENU_WINDOW_COLUMNS, 
 			4,
 			(column_max - MENU_WINDOW_COLUMNS) / 2); // height/width line/column
+	const char * main_menu_items[] = MAIN_MENU_LIST;
+	//const int main_menu_length = sizeof(main_menu_items) / sizeof(main_menu_items[0]);
+	struct Menu main_menu = {
+		.window = menu_win,
+		.options = main_menu_items,
+		.size = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
+		.selected_option = 0
+	};
+	
 	WINDOW * edit_win = newwin(
 			EDIT_WINDOW_LINES, 
 			EDIT_WINDOW_COLUMNS,
@@ -238,33 +253,33 @@ int main(int argc, char** argv)
 	mvwprintw(edit_win, 2, 1, "Line %d", 2);
 	wrefresh(edit_win);
 
-	int selected_menu_option = 1;
-	draw_menu(menu_win, edit_menu_items, edit_menu_length, selected_menu_option);
+	//int selected_menu_option = 1;
+	draw_menu(main_menu);
 	while(1) {
-		int next_state = get_input(menu_win);
-		mvwprintw(menu_win, edit_menu_length + 1, 2, "                    ");
+		int next_state = get_input(main_menu.window);
+		mvwprintw(main_menu.window, main_menu.size + 1, 2, "                    ");
 		switch(next_state)
 		{
 			case SELECT_PREVIOUS_OPTION :
-				if (selected_menu_option > 0)
+				if (main_menu.selected_option > 0)
 				{
-					selected_menu_option--; 
+					main_menu.selected_option--; 
 				}
-				draw_menu(menu_win, edit_menu_items, edit_menu_length, selected_menu_option);
+				draw_menu(main_menu);
 				break;
 			case SELECT_NEXT_OPTION :
-				if (selected_menu_option < edit_menu_length - 1)
+				if (main_menu.selected_option < main_menu.size - 1)
 				{
-					selected_menu_option++;
+					main_menu.selected_option++;
 				}
-				draw_menu(menu_win, edit_menu_items, edit_menu_length, selected_menu_option);
+				draw_menu(main_menu);
 				break;
 			case EXECUTE_SELECTED_OPTION :
-				wmove(menu_win, edit_menu_length + 1, 2);
-				wprintw(menu_win, "Pressed enter.");
+				wmove(main_menu.window, main_menu.size + 1, 2);
+				wprintw(main_menu.window, "Pressed enter.");
 				break;
 			case QUIT :
-				mvwprintw(menu_win, edit_menu_length + 1, 2, "Quitting...");
+				mvwprintw(main_menu.window, main_menu.size + 1, 2, "Quitting...");
 				endwin(); // Deallocate memory and end ncurses
 				return 0;
 				break;
@@ -273,6 +288,6 @@ int main(int argc, char** argv)
 				break;
 
 		}
-		wrefresh(menu_win);
+		wrefresh(main_menu.window);
 	}
 }	
