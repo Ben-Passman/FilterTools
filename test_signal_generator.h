@@ -1,3 +1,17 @@
+/********************************************************************************************************************************
+ * FilterTools/test_signal_generator.h
+ *
+ * Author	: Ben Passman
+ * Created	: 25/12/2020
+ *
+ * Description	: Generator functions for creating test waveforms
+ *
+ * Revision History:
+ * Date		Author		Ref	Revision
+ * 25/12/2020	Ben P		1.01	Created header file to hold definitions for menu constants
+ *
+ * */
+
 #define MAIN_MENU_LIST { "Edit settings", "Add new wave", "Modify existing wave", "Delete wave", "Load wave set", "Save wave set", "Export combined waveform" }
 
 enum menu_commands{ SELECT_PREVIOUS_OPTION, SELECT_NEXT_OPTION, EXECUTE_SELECTED_OPTION, QUIT };

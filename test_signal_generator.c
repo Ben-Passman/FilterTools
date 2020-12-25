@@ -9,6 +9,8 @@
  * Revision History:
  * Date		Author		Ref	Revision
  * 22/12/2020	Ben P		1.0	Sine, saw, triangle and square wave generators implemented.
+ * 25/12/2020	Ben P		1.01	Generator code freeze, begin work on ncurses menu code.
+ *
  * */
 
 #include "test_signal_generator.h"
