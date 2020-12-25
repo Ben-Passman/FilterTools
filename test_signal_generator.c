@@ -11,11 +11,14 @@
  * 22/12/2020	Ben P		1.0	Sine, saw, triangle and square wave generators implemented.
  * */
 
+#include "test_signal_generator.h"
+
 #include<errno.h>
 #include<limits.h>
 #include<math.h>
 #include<stdlib.h>
 #include<stdio.h>
+#include<ncurses.h>
 
 long double string_to_long_double(char * string)
 {
@@ -146,20 +149,138 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 	fclose(fp);
 }
 
+void draw_menu(WINDOW * menu_window, const int active_line)
+{
+	const char * menu_1 = "Edit settings";
+	const char * menu_2 = "Add new wave";
+	const char * menu_3 = "Modify existing wave";
+	const char * menu_4 = "Delete wave";
+	const char * menu_5 = "Export combined waveform";
+	const char ** menu_options[5] = { &menu_1, &menu_2, &menu_3, &menu_4, &menu_5 };
+
+	for (int i = 0; i < sizeof(menu_options) / sizeof(char **); i++)
+	{
+		if (i == active_line)
+		{
+			wattron(menu_window, A_REVERSE);
+			mvwprintw(menu_window, 1 + i, 2, *menu_options[i]);
+			wattroff(menu_window, A_REVERSE);
+		}
+		else
+		{
+			mvwprintw(menu_window, 1 + i, 2, *menu_options[i]);
+		}
+	}
+	wrefresh(menu_window);
+}
+
+
+
 int main(int argc, char** argv)
 {
-	if (argc > 2)
+/*	if (argc > 2)
 	{
 		long double sampleCount = string_to_long_double(argv[1]);
 		long double sampleFreq = string_to_long_double(argv[2]);
-
 		// Tested 100 samples at 1MHz
 		generate_signal(sampleCount, sampleFreq);
 	}
 	else
 	{
 		printf("Missing function arguments\n");
-	}
+	}*/
 
-	return 0;
+	initscr();	// Init screen, setup memory and clear screen
+	cbreak();	// Unbuffered input, enables Ctrl + C to exit ncurses (default)
+		//halfdelay(10ths);	// passes value every n-tenths, -1 for no key press
+		//nodelay(win, true);	// passes values continuously, -1 for no key press
+		//timeout(delay);	// -1 waits for input, otherwise ms delay between passing
+	noecho();	// User input is not echoed
+	// raw();	// Takes raw input, disables Ctrl + C
+
+	int row_max, column_max; // Functions to get line/column coords
+	//getyx(stdscr, y, x);
+	//getbegyx(stdscr, y, x);
+	getmaxyx(stdscr, row_max, column_max);
+	
+	WINDOW * menu_win = newwin(
+			MENU_WINDOW_LINES, 
+			MENU_WINDOW_COLUMNS, 
+			4,
+			(column_max - MENU_WINDOW_COLUMNS) / 2); // height/width line/column
+	int y, x;
+	getbegyx(menu_win, y, x);
+	WINDOW * edit_win = newwin(
+			EDIT_WINDOW_LINES, 
+			EDIT_WINDOW_COLUMNS,
+		       	4 + MENU_WINDOW_LINES, 
+		       	(column_max - MENU_WINDOW_COLUMNS) / 2);
+	box(menu_win, 0, 0);
+	box(edit_win, 0, 0);
+	refresh(); // Screen level refresh
+	curs_set(0); // Hide cursor
+
+	wprintw(edit_win, "Edit window");
+	
+	mvwprintw(edit_win, 1, 1, "Line %d", 1);
+	mvwprintw(edit_win, 2, 1, "Line %d", 2);
+	wrefresh(edit_win);
+
+	int selected_menu_option = 1;
+	draw_menu(menu_win, selected_menu_option);
+	while(1) {
+		keypad(menu_win, true); // For arrow key presses
+		int c = wgetch(menu_win); // refreshes window as well
+		mvwprintw(menu_win, MENU_MESSAGE_Y, 2, "                    ");
+		switch(c)
+		{	
+//			case KEY_F(1-12) :
+			case KEY_UP :
+				if (selected_menu_option > 0)
+				{
+					selected_menu_option--;
+				}
+				draw_menu(menu_win, selected_menu_option);
+				break;
+			case KEY_DOWN :
+				if (selected_menu_option < MENU_LINES - 1) // Magic number, need to consolidate
+				{
+					selected_menu_option++;
+				}
+				draw_menu(menu_win, selected_menu_option);
+				break;
+			case '\n' :
+				wmove(menu_win, MENU_MESSAGE_Y, 2);
+				wprintw(menu_win, "Pressed enter.");
+				break;
+			case 'q' :
+				mvwprintw(menu_win, MENU_MESSAGE_Y, 2, "Quitting...");
+				endwin(); // Deallocate memory and end ncurses
+				return 0;
+				break;
+		}
+		wrefresh(menu_win);
+	}
+	
+
+/*	// Custom Attribute Data
+	attr_t emphasis = A_REVERSE | COLOR_PAIR(2);
+	attron(emphasis);*/
+
+	/*refresh();
+
+	start_color();
+	can_change_color(); // Tests for ability
+	init_color(COLOR_CYAN, 250, 750, 850);
+	init_pair(1, COLOR_CYAN, COLOR_WHITE);
+	attron(COLOR_PAIR(1));
+	printw("Colour test...");
+	attroff(COLOR_PAIR(1));
+	//box(win, 0, 0); // Character codes to use for border
+	wborder(win, 103, 103, 104, 104, 120, 121, 122, 123); // l,r,t,b,tl,tr,bl,br
+	mvwprintw(win, 1, 1, "Inside box");
+	wrefresh(win);
+
+	//attron() attroff() to set attributes (e.g. reverse colour)
+	clear();*/
 }	
