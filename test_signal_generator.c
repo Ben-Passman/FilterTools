@@ -167,7 +167,28 @@ void draw_menu(WINDOW * menu_window, const char ** menu_items, const int menu_si
 	wrefresh(menu_window);
 }
 
-
+int get_input(WINDOW * win)
+{
+	int command = -1;
+	keypad(win, true); // For arrow key presses
+	int c = wgetch(win); // refreshes window as well
+	switch(c)
+	{	
+		case KEY_UP :
+			command = SELECT_PREVIOUS_OPTION;
+			break;
+		case KEY_DOWN :
+			command = SELECT_NEXT_OPTION;
+			break;
+		case '\n' :
+			command = EXECUTE_SELECTED_OPTION;
+			break;
+		case 'q' :
+			command =  QUIT;
+			break;
+	}
+	return command;
+}
 
 int main(int argc, char** argv)
 {
@@ -188,9 +209,15 @@ int main(int argc, char** argv)
 	noecho();	// User input is not echoed
 
 	const char * edit_menu_items[] = EDIT_MENU_LIST;
+	const int edit_menu_length = sizeof(edit_menu_items) / sizeof(edit_menu_items[0]);
 	int row_max, column_max; // Functions to get line/column coords
 	getmaxyx(stdscr, row_max, column_max);
-	
+	if(row_max < 0 || column_max < 0)
+	{
+		// PLACEHOLDER - TEST FOR MINIMUM SCREEN SIZE
+		printf("Insufficient screen space in current console");
+	}
+
 	WINDOW * menu_win = newwin(
 			MENU_WINDOW_LINES, 
 			MENU_WINDOW_COLUMNS, 
@@ -212,36 +239,39 @@ int main(int argc, char** argv)
 	wrefresh(edit_win);
 
 	int selected_menu_option = 1;
-	draw_menu(menu_win, edit_menu_items, sizeof(edit_menu_items) / sizeof(edit_menu_items[0]), selected_menu_option);
+	draw_menu(menu_win, edit_menu_items, edit_menu_length, selected_menu_option);
 	while(1) {
-		keypad(menu_win, true); // For arrow key presses
-		int c = wgetch(menu_win); // refreshes window as well
-		mvwprintw(menu_win, MENU_MESSAGE_Y, 2, "                    ");
-		switch(c)
-		{	
-			case KEY_UP :
+		int next_state = get_input(menu_win);
+		mvwprintw(menu_win, edit_menu_length + 1, 2, "                    ");
+		switch(next_state)
+		{
+			case SELECT_PREVIOUS_OPTION :
 				if (selected_menu_option > 0)
 				{
-					selected_menu_option--;
+					selected_menu_option--; 
 				}
-				draw_menu(menu_win, edit_menu_items, sizeof(edit_menu_items) / sizeof(edit_menu_items[0]), selected_menu_option);
+				draw_menu(menu_win, edit_menu_items, edit_menu_length, selected_menu_option);
 				break;
-			case KEY_DOWN :
-				if (selected_menu_option < MENU_LINES - 1) // Magic number, need to consolidate
+			case SELECT_NEXT_OPTION :
+				if (selected_menu_option < edit_menu_length - 1)
 				{
 					selected_menu_option++;
 				}
-				draw_menu(menu_win, edit_menu_items, sizeof(edit_menu_items) / sizeof(edit_menu_items[0]), selected_menu_option);
+				draw_menu(menu_win, edit_menu_items, edit_menu_length, selected_menu_option);
 				break;
-			case '\n' :
-				wmove(menu_win, MENU_MESSAGE_Y, 2);
+			case EXECUTE_SELECTED_OPTION :
+				wmove(menu_win, edit_menu_length + 1, 2);
 				wprintw(menu_win, "Pressed enter.");
 				break;
-			case 'q' :
-				mvwprintw(menu_win, MENU_MESSAGE_Y, 2, "Quitting...");
+			case QUIT :
+				mvwprintw(menu_win, edit_menu_length + 1, 2, "Quitting...");
 				endwin(); // Deallocate memory and end ncurses
 				return 0;
 				break;
+			default :
+				return -1;
+				break;
+
 		}
 		wrefresh(menu_win);
 	}
