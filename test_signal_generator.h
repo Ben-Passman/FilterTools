@@ -7,14 +7,25 @@
  * Description	: Generator functions for creating test waveforms
  *
  * Revision History:
- * Date		Author		Ref	Revision
- * 25/12/2020	Ben P		1.01	Created header file to hold definitions for menu constants
+ * Date		Author		Rev	Notes
+ * 25/12/2020	Ben P		1.01	Created header file.
  *
  * */
 
-#define MAIN_MENU_LIST { "Edit settings", "Add new wave", "Modify existing wave", "Delete wave", "Load wave set", "Save wave set", "Export combined waveform" }
+enum menu_commands{ 
+	SELECT_PREVIOUS_OPTION, 
+	SELECT_NEXT_OPTION, 
+	EXECUTE_SELECTED_OPTION, 
+	QUIT };
 
-enum menu_commands{ SELECT_PREVIOUS_OPTION, SELECT_NEXT_OPTION, EXECUTE_SELECTED_OPTION, QUIT };
+#define MAIN_MENU_LIST { \
+	"Edit settings", \
+	"Add new wave", \
+	"Modify existing wave", \
+	"Delete wave", \
+	"Load wave set", \
+	"Save wave set", \
+	"Export combined waveform" }
 
 #define MENU_WINDOW_COLUMNS 50
 #define MENU_WINDOW_LINES 10

@@ -1,4 +1,4 @@
-/****************************************************************************************************************
+/************************************************************************************************
  * FilterTools/test_signal_generator.c
  * 
  * Author	: Ben Passman
@@ -7,13 +7,14 @@
  * Description	: Generator functions for creating test waveforms. 
  *
  * Revision History:
- * Date		Author		Ref	Revision
+ * Date		Author		Rev	Notes
  * 22/12/2020	Ben P		1.0	Sine, saw, triangle and square wave generators implemented.
  * 25/12/2020	Ben P		1.01	Generator code freeze, begin work on ncurses menu code.
  *
- * */
+ ************************************************************************************************ */
 
 #include "test_signal_generator.h"
+#include "ASCII_parser.h"
 
 #include<errno.h>
 #include<limits.h>
@@ -174,7 +175,7 @@ void draw_menu(struct Menu menu)
 			mvwprintw(menu.window, 1 + i, 2, menu.options[i]);
 		}
 	}
-	wrefresh(menu.window);
+	//wrefresh(menu.window);
 }
 
 int get_input(WINDOW * win)
@@ -200,6 +201,48 @@ int get_input(WINDOW * win)
 	return command;
 }
 
+int menu_interface(struct Menu *menu, int instruction)
+{
+	char * s;
+	s = malloc(20);
+	switch(instruction)
+	{
+		case SELECT_PREVIOUS_OPTION :
+			if (menu->selected_option > 0)
+			{
+				menu->selected_option--; 
+			}
+			draw_menu(*menu);
+			break;
+		case SELECT_NEXT_OPTION :
+			if (menu->selected_option < menu->size - 1)
+			{
+				menu->selected_option++;
+			}
+			draw_menu(*menu);
+			break;
+		case EXECUTE_SELECTED_OPTION :
+			//wprintw(menu->window, "Pressed enter.");
+			mvwinnstr(menu->window, menu->selected_option+1, 2, s, 20);
+			wmove(menu->window, menu->size + 1, 2);
+			wprintw(menu->window, "%s\n", s);
+			break;
+		case QUIT :
+			wmove(menu->window, menu->size + 1, 2);
+			wprintw(menu->window, "Quitting...");
+			endwin(); // Deallocate memory and end ncurses
+			return 0;
+			break;
+		default :
+			return -1;
+			break;
+	}
+	//wrefresh(menu->window);
+
+	free(s);
+	return 1;
+}
+
 int main(int argc, char** argv)
 {
 /*	if (argc > 2)
@@ -217,7 +260,8 @@ int main(int argc, char** argv)
 	initscr();	// Init screen, setup memory and clear screen
 	cbreak();	// Unbuffered input, enables Ctrl + C to exit ncurses (default)
 	noecho();	// User input is not echoed
-			
+	curs_set(0);	// Hide cursor
+
 	int row_max, column_max; // Functions to get line/column coords
 	getmaxyx(stdscr, row_max, column_max);
 	if(row_max < 0 || column_max < 0)
@@ -226,70 +270,50 @@ int main(int argc, char** argv)
 		printf("Insufficient screen space in current console");
 	}
 
-	WINDOW * menu_win = newwin(
+	WINDOW * menu_window = newwin(
 			MENU_WINDOW_LINES, 
 			MENU_WINDOW_COLUMNS, 
 			4,
 			(column_max - MENU_WINDOW_COLUMNS) / 2); // height/width line/column
 	const char * main_menu_items[] = MAIN_MENU_LIST;
-	//const int main_menu_length = sizeof(main_menu_items) / sizeof(main_menu_items[0]);
 	struct Menu main_menu = {
-		.window = menu_win,
+		.window = menu_window,
 		.options = main_menu_items,
 		.size = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
 		.selected_option = 0
 	};
-	
-	WINDOW * edit_win = newwin(
+	box(main_menu.window, 0, 0);	
+
+	WINDOW * output_window = newwin(
 			EDIT_WINDOW_LINES, 
 			EDIT_WINDOW_COLUMNS,
 		       	4 + MENU_WINDOW_LINES, 
 		       	(column_max - MENU_WINDOW_COLUMNS) / 2);
-	box(menu_win, 0, 0);
-	box(edit_win, 0, 0);
+	box(output_window, 0, 0);
+	
 	refresh(); // Screen level refresh
-	curs_set(0); // Hide cursor
 
-	wprintw(edit_win, "Edit window");
-	mvwprintw(edit_win, 1, 1, "Line %d", 1);
-	mvwprintw(edit_win, 2, 1, "Line %d", 2);
-	wrefresh(edit_win);
+	// Debug
+	mvwprintw(output_window, 1, 2, "Sampling frequency: 555 kHz");
+	mvwprintw(output_window, 2, 2, "Sample count:       1000");
+	mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
+	wrefresh(output_window);
 
 	//int selected_menu_option = 1;
 	draw_menu(main_menu);
-	while(1) {
+	while(1) 
+	{
 		int next_state = get_input(main_menu.window);
-		mvwprintw(main_menu.window, main_menu.size + 1, 2, "                    ");
-		switch(next_state)
+		int status = menu_interface(&main_menu, next_state);
+		if(status == 0)
 		{
-			case SELECT_PREVIOUS_OPTION :
-				if (main_menu.selected_option > 0)
-				{
-					main_menu.selected_option--; 
-				}
-				draw_menu(main_menu);
-				break;
-			case SELECT_NEXT_OPTION :
-				if (main_menu.selected_option < main_menu.size - 1)
-				{
-					main_menu.selected_option++;
-				}
-				draw_menu(main_menu);
-				break;
-			case EXECUTE_SELECTED_OPTION :
-				wmove(main_menu.window, main_menu.size + 1, 2);
-				wprintw(main_menu.window, "Pressed enter.");
-				break;
-			case QUIT :
-				mvwprintw(main_menu.window, main_menu.size + 1, 2, "Quitting...");
-				endwin(); // Deallocate memory and end ncurses
-				return 0;
-				break;
-			default :
-				return -1;
-				break;
-
+			return 1;
 		}
 		wrefresh(main_menu.window);
+
+		// Debug
+		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.size);
+		mvwprintw(output_window, 6, 2, "Selected option: %d", main_menu.selected_option);
+		wrefresh(output_window);	
 	}
 }	
