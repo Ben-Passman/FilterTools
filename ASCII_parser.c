@@ -20,7 +20,7 @@
 
 int ASCII_char_to_int(const char c)
 {
-    if (c > 47 && c < 58)
+    if (c > 47 && c < 58) // if input char is '0'-'9'
     {
         return (int) c - 48; // (int) '0' = 48;
     }
@@ -37,9 +37,13 @@ double get_sign(const char * string, int * index)
     while (*index < length && ASCII_char_to_int(string[*index]) < 0 && string[*index] != ',' && string[*index] != '.')
     {
 	if(string[*index] == '-')
+	{
 	    sign = -1.0;
+	}
 	else if (string[*index] != ' ')
+	{   
 	    sign = 1.0;
+	}
 	(*index)++;
     }
 
@@ -53,16 +57,16 @@ double get_integer(const char * string, int * index)
     while (*index < length)
     {
 	int test = ASCII_char_to_int(string[*index]);
-	if(test < 0)
+	if (test >= 0)
 	{
-	    if(string[*index] != ' ')
+		integer *= 10;
+		integer += test;
+	}
+	else if (string[*index] != ' ')
+	{
 		return integer;
 	}
-	else
-	{
-	    integer *= 10;
-	    integer += test;
-	}
+
 	(*index)++;
     }
     return integer;
@@ -76,16 +80,16 @@ double get_fraction(const char * string, int * index)
     while (*index < length)
     {
 	int test = ASCII_char_to_int(string[*index]);
-	if(test < 0)
+	if (test >= 0)
 	{
-	    if(string[*index] != ' ')
+		fraction += test * power;
+		power /= 10.0;
+	}
+	else if (string[*index] != ' ')
+	{
 		return fraction;
 	}
-	else
-	{
-	    fraction += test * power;
-	    power /= 10.0;
-	}
+	
 	(*index)++;
     }
 
@@ -96,23 +100,20 @@ double ASCII_string_to_double(const char * input)
 {
     int length = strlen(input);
     int index = 0;
-    char c;
     double sign = 1.0;
     double base = 0.0;
     double exponent = 1.0;
     
     sign = get_sign(input, &index);
     base = get_integer(input, &index);
-    c = input[index];
-    if(index < length && (c == ',' || c == '.'))
+    if(index < length && (input[index] == ',' || input[index] == '.'))
     {
 	index++;
 	base += get_fraction(input, &index);
     }
     base *= sign;
 
-    c = input[index];
-    if(index < length && (c == 'e' || c == 'E'))
+    if(index < length && (input[index] == 'e' || input[index] == 'E'))
     {
 	index++;
 	double exponent_sign = get_sign(input, &index);
@@ -124,9 +125,8 @@ double ASCII_string_to_double(const char * input)
 
     while (index < length)
     {
-	c = input[index];
 	// check for SI suffix
-	switch(c)
+	switch(input[index])
 	{
 	    case 'Y' :
 	    case 'Z' :
@@ -144,7 +144,7 @@ double ASCII_string_to_double(const char * input)
 	    case 'a' :
 	    case 'z' :
 	    case 'y' :
-		base *= SI_suffixes[(int)c - 65];
+		base *= SI_suffixes[(int)input[index] - 65];
 		index = length;
 	    default :
 		break;
