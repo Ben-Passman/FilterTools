@@ -144,7 +144,7 @@ double ASCII_string_to_double(const char * input)
 	    case 'a' :
 	    case 'z' :
 	    case 'y' :
-		base *= SI_suffixes[(int)input[index] - 65];
+		base *= char_to_SI_value((int)input[index]);
 		index = length;
 	    default :
 		break;
@@ -158,22 +158,39 @@ double ASCII_string_to_double(const char * input)
 void print_scientific(double number)
 {
     int exponent = 0;
-    if (number == 0.0)
+    if (number != 0.0)
     {
-	printf("0.0e0\n");
-	return;
-    }
-    while (number < 1 && number > -1)
-    {
-	number *= 10;
-	exponent--;
-    }
-    while (number >= 10 || number <= -10)
-    {
-	number /= 10;
-	exponent++;
+	while (number < 1 && number > -1)
+	{
+	    number *= 10;
+	    exponent--;
+	}
+	while (number >= 10 || number <= -10)
+	{
+	    number /= 10;
+	    exponent++;
+	}
     }
     printf("%lfe%d\n", number, exponent);
+}
+
+void print_SI(double number)
+{
+    int  index = SI_DEFAULT;
+    if(number != 0.0)
+    {
+	while (number < 1 && number > -1 && number != 0.0)
+	{
+	    number *= 1000;
+	    index--;
+	}
+	while (number >= 1000 || number <= -1000)
+	{
+	    number /= 1000;
+	    index++;
+	}
+    }
+    printf("%lf%c\n", number, SI_prefixes[index]);
 }
 
 int main(int argc, char ** argv)
@@ -183,7 +200,7 @@ int main(int argc, char ** argv)
 	double number = ASCII_string_to_double(argv[1]);
 	printf("%lf\n", number);
 	print_scientific(number);
-
+	print_SI(number);
     }
     return 0;
 }
