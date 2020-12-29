@@ -23,9 +23,15 @@
 #include<stdio.h>
 #include<ncurses.h>
 
+struct Menu_option {
+	const int line;
+	const int column;
+	const char * text;
+};
+
 struct Menu {
 	WINDOW * window;
-	const char ** options;
+	const struct Menu_option (*options)[];
 	const int size;
 	int selected_option;
 	// pointer to commands (function array)
@@ -167,12 +173,22 @@ void draw_menu(struct Menu menu)
 		if (i == menu.selected_option)
 		{
 			wattron(menu.window, A_REVERSE);
-			mvwprintw(menu.window, 1 + i, 2, menu.options[i]);
+			mvwprintw(
+				menu.window, 
+				(*menu.options)[i].line,
+				(*menu.options)[i].column,
+				(*menu.options)[i].text
+			);
 			wattroff(menu.window, A_REVERSE);
 		}
 		else
 		{
-			mvwprintw(menu.window, 1 + i, 2, menu.options[i]);
+			mvwprintw(
+				menu.window,
+				(*menu.options)[i].line,
+				(*menu.options)[i].column,
+				(*menu.options)[i].text
+			);
 		}
 	}
 	//wrefresh(menu.window);
@@ -197,15 +213,19 @@ int get_input(WINDOW * win)
 		case 'q' :
 			command =  QUIT;
 			break;
+		default :
+			command = DO_NOTHING;
+			break;
 	}
 	return command;
 }
 
-int menu_interface(struct Menu *menu, int instruction)
+int menu_interface(struct Menu *menu)
 {
 	char * s;
 	s = malloc(20);
-	switch(instruction)
+	int option = get_input(menu->window);
+	switch(option)
 	{
 		case SELECT_PREVIOUS_OPTION :
 			if (menu->selected_option > 0)
@@ -230,17 +250,13 @@ int menu_interface(struct Menu *menu, int instruction)
 		case QUIT :
 			wmove(menu->window, menu->size + 1, 2);
 			wprintw(menu->window, "Quitting...");
-			endwin(); // Deallocate memory and end ncurses
-			return 0;
 			break;
 		default :
 			return -1;
 			break;
 	}
-	//wrefresh(menu->window);
-
 	free(s);
-	return 1;
+	return option;
 }
 
 int main(int argc, char** argv)
@@ -275,10 +291,10 @@ int main(int argc, char** argv)
 			MENU_WINDOW_COLUMNS, 
 			4,
 			(column_max - MENU_WINDOW_COLUMNS) / 2); // height/width line/column
-	const char * main_menu_items[] = MAIN_MENU_LIST;
+	const struct Menu_option main_menu_items[] = MAIN_MENU_LIST;
 	struct Menu main_menu = {
 		.window = menu_window,
-		.options = main_menu_items,
+		.options = &main_menu_items,
 		.size = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
 		.selected_option = 0
 	};
@@ -303,13 +319,13 @@ int main(int argc, char** argv)
 	draw_menu(main_menu);
 	while(1) 
 	{
-		int next_state = get_input(main_menu.window);
-		int status = menu_interface(&main_menu, next_state);
-		if(status == 0)
+		int action = menu_interface(&main_menu);
+		wrefresh(main_menu.window);
+		if(action == QUIT)
 		{
+			endwin(); // Deallocate memory and end ncurses
 			return 1;
 		}
-		wrefresh(main_menu.window);
 
 		// Debug
 		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.size);
