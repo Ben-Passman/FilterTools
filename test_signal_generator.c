@@ -23,7 +23,7 @@
 #include<stdio.h>
 #include<ncurses.h>
 
-struct Menu_option {
+struct Menu_item {
 	const int line;
 	const int column;
 	const char * text;
@@ -31,8 +31,10 @@ struct Menu_option {
 
 struct Menu {
 	WINDOW * window;
-	const struct Menu_option (*options)[];
-	const int size;
+	const struct Menu_item (*labels)[];
+	const int label_size;
+	const struct Menu_item (*options)[];
+	const int option_size;
 	int selected_option;
 	// pointer to commands (function array)
 };
@@ -168,7 +170,16 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 
 void draw_menu(struct Menu menu)
 {
-	for (int i = 0; i < menu.size; i++)
+	for (int i = 0; i < menu.label_size; i++)
+	{
+		mvwprintw(
+			menu.window,
+			(*menu.labels)[i].line,
+			(*menu.labels)[i].column,
+			(*menu.labels)[i].text
+		);
+	}
+	for (int i = 0; i < menu.option_size; i++)
 	{
 		if (i == menu.selected_option)
 		{
@@ -196,22 +207,24 @@ void draw_menu(struct Menu menu)
 
 int get_input(WINDOW * win)
 {
-	int command = -1;
+	int command = DO_NOTHING;
 	keypad(win, true); // For arrow key presses
 	int c = wgetch(win); // refreshes window as well
 	switch(c)
 	{	
 		case KEY_UP :
+		case KEY_LEFT :
 			command = SELECT_PREVIOUS_OPTION;
 			break;
 		case KEY_DOWN :
+		case KEY_RIGHT :
 			command = SELECT_NEXT_OPTION;
 			break;
 		case '\n' :
 			command = EXECUTE_SELECTED_OPTION;
 			break;
 		case 'q' :
-			command =  QUIT;
+			command = QUIT;
 			break;
 		default :
 			command = DO_NOTHING;
@@ -235,7 +248,7 @@ int menu_interface(struct Menu *menu)
 			draw_menu(*menu);
 			break;
 		case SELECT_NEXT_OPTION :
-			if (menu->selected_option < menu->size - 1)
+			if (menu->selected_option < menu->option_size - 1)
 			{
 				menu->selected_option++;
 			}
@@ -243,12 +256,12 @@ int menu_interface(struct Menu *menu)
 			break;
 		case EXECUTE_SELECTED_OPTION :
 			//wprintw(menu->window, "Pressed enter.");
-			mvwinnstr(menu->window, menu->selected_option+1, 2, s, 20);
-			wmove(menu->window, menu->size + 1, 2);
+			//mvwinnstr(menu->window, menu->selected_option+1, 2, s, 20);
+			wmove(menu->window, menu->option_size + 1, 2);
 			wprintw(menu->window, "%s\n", s);
 			break;
 		case QUIT :
-			wmove(menu->window, menu->size + 1, 2);
+			wmove(menu->window, menu->option_size + 1, 2);
 			wprintw(menu->window, "Quitting...");
 			break;
 		default :
@@ -286,25 +299,44 @@ int main(int argc, char** argv)
 		printf("Insufficient screen space in current console");
 	}
 
-	WINDOW * menu_window = newwin(
-			MENU_WINDOW_LINES, 
-			MENU_WINDOW_COLUMNS, 
-			4,
-			(column_max - MENU_WINDOW_COLUMNS) / 2); // height/width line/column
-	const struct Menu_option main_menu_items[] = MAIN_MENU_LIST;
+	const struct Menu_item main_menu_items[] = MAIN_MENU_OPTIONS;
 	struct Menu main_menu = {
-		.window = menu_window,
+		.window = newwin(
+			MAIN_MENU_WINDOW_LINES,
+			MAIN_MENU_WINDOW_COLUMNS,
+			4,
+			(column_max - MAIN_MENU_WINDOW_COLUMNS) / 2
+		),
+		.labels = NULL,
+		.label_size = 0,
 		.options = &main_menu_items,
-		.size = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
+		.option_size = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
 		.selected_option = 0
 	};
 	box(main_menu.window, 0, 0);	
 
+	const struct Menu_item file_menu_labels[] = FILE_MENU_LABELS;
+	const struct Menu_item file_menu_options[] = FILE_MENU_OPTIONS;
+	struct Menu file_menu = {
+		.window = newwin(
+			FILE_WINDOW_LINES,
+			FILE_WINDOW_COLUMNS,
+			2,
+			(column_max - FILE_WINDOW_COLUMNS) / 2
+		),
+		.labels = &file_menu_labels,
+		.label_size = sizeof(file_menu_labels) / sizeof(file_menu_labels[0]),
+		.options = &file_menu_options,
+		.option_size = sizeof(file_menu_options) / sizeof(file_menu_options[0]),
+		.selected_option = 0
+	};
+	box(file_menu.window, 0, 0);
+
 	WINDOW * output_window = newwin(
 			EDIT_WINDOW_LINES, 
 			EDIT_WINDOW_COLUMNS,
-		       	4 + MENU_WINDOW_LINES, 
-		       	(column_max - MENU_WINDOW_COLUMNS) / 2);
+		       	4 + MAIN_MENU_WINDOW_LINES, 
+		       	(column_max - MAIN_MENU_WINDOW_COLUMNS) / 2);
 	box(output_window, 0, 0);
 	
 	refresh(); // Screen level refresh
@@ -319,17 +351,18 @@ int main(int argc, char** argv)
 	draw_menu(main_menu);
 	while(1) 
 	{
-		int action = menu_interface(&main_menu);
-		wrefresh(main_menu.window);
+		//int action = menu_interface(&main_menu);
+		//wrefresh(main_menu.window);
+		int action = menu_interface(&file_menu);
+		wrefresh(file_menu.window);
 		if(action == QUIT)
 		{
 			endwin(); // Deallocate memory and end ncurses
 			return 1;
 		}
-
 		// Debug
-		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.size);
+		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.option_size);
 		mvwprintw(output_window, 6, 2, "Selected option: %d", main_menu.selected_option);
-		wrefresh(output_window);	
+		wrefresh(output_window);
 	}
 }	

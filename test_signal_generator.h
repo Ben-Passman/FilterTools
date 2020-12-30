@@ -19,16 +19,32 @@ enum menu_commands{
 	EXECUTE_SELECTED_OPTION, 
 	QUIT };
 
-#define MAIN_MENU_LIST { \
+#define MAIN_MENU_WINDOW_LINES 10
+#define MAIN_MENU_WINDOW_COLUMNS 50
+#define MAIN_MENU_OPTIONS \
+{ \
 	{ 1, 2, "Edit settings" }, \
 	{ 2, 2, "Add new wave" }, \
 	{ 3, 2, "Modify existing wave" }, \
 	{ 4, 2, "Delete wave" }, \
 	{ 5, 2, "Load wave set" }, \
 	{ 6, 2, "Save wave set" }, \
-	{ 7, 2, "Export combined waveform" } }
+	{ 7, 2, "Export combined waveform" } \
+}
 
-#define MENU_WINDOW_COLUMNS 50
-#define MENU_WINDOW_LINES 10
-#define EDIT_WINDOW_COLUMNS 50
+#define FILE_WINDOW_LINES 8
+#define FILE_WINDOW_COLUMNS 50
+#define FILE_MENU_LABELS \
+{ \
+	{ 2, 2, "Path:" } \
+}
+
+#define FILE_MENU_OPTIONS \
+{ \
+	{ 2, 8, "~/Documents/test.txt" }, \
+	{ 5, 8, "   Ok   " }, \
+	{ 5, 20, " Cancel " } \
+}
+
 #define EDIT_WINDOW_LINES 20
+#define EDIT_WINDOW_COLUMNS 50
