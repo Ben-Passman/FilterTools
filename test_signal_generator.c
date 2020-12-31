@@ -221,8 +221,35 @@ int main(int argc, char** argv)
 	update_panels();
 	doupdate();
 
+	FIELD * file_fields[4];
+	FORM * file_form;
+	file_fields[0] = new_field(1, 10, 4, 18, 0, 0);
+	file_fields[1] = new_field(1, 10, 6, 18, 0, 0);
+	file_fields[2] = new_field(1, 10, 8, 18, 0, 0);
+	file_fields[3] = NULL;
+
+	set_field_back(file_fields[0], A_UNDERLINE);
+	field_opts_off(file_fields[0], O_AUTOSKIP);
+	set_field_buffer(file_fields[1], 0, "Testing...");
+	set_field_back(file_fields[1], A_UNDERLINE);
+	field_opts_off(file_fields[1], O_AUTOSKIP);
+	set_field_back(file_fields[2], A_UNDERLINE);
+	field_opts_off(file_fields[2], O_AUTOSKIP);	
+
+	int rows = 8;
+	int cols = 28;
+	file_form = new_form(file_fields);
+	scale_form(file_form, &rows, &cols);
+	set_form_win(file_form, popup_window);
+	set_form_sub(file_form, derwin(popup_window, rows, cols, 2, 2));
+	post_form(file_form);
+
+	mvwprintw(popup_window, 4, 10, "Value 1:");
+	mvwprintw(popup_window, 6, 10, "Value 2:");
+	wrefresh(popup_window);
+	
 	int c;
-	keypad(menu_window, TRUE);
+	/*keypad(menu_window, TRUE);
 	while((c = wgetch(menu_window)) != 'q')
 	{
 		switch(c)
@@ -242,9 +269,34 @@ int main(int argc, char** argv)
 				{
 					hide_panel(popup_panel);
 				}
+		}
+	}
+	*/
+	//echo();
+	curs_set(1);
+	keypad(popup_window, TRUE);
+	while((c = wgetch(popup_window)) != KEY_F(1))
+	{
+		switch(c)
+		{
+			case 27 :
+				return 1;
+			case KEY_DOWN :
+				form_driver(file_form, REQ_NEXT_FIELD);
+				form_driver(file_form, REQ_END_LINE);
+				break;
+			case KEY_UP :
+				form_driver(file_form, REQ_PREV_FIELD);
+				form_driver(file_form, REQ_END_LINE);
+				break;
+			case '\n' :
+				
+				break;
+			default :
+				form_driver(file_form, c);
 				break;
 		}
-	
+
 		if (panel_hidden(popup_panel))
 		{
 			// Debug
@@ -268,6 +320,12 @@ int main(int argc, char** argv)
 	free_menu(main_menu);
 	for(int i =0; i < main_menu_item_count; i++)
 		free_item(main_menu_items[i]);
+
+	unpost_form(file_form);
+	free_form(file_form);
+	for(int i = 0; i < 4; i++)
+		free_field(file_fields[i]);
+
 	endwin();
 	return 1;
 }	
