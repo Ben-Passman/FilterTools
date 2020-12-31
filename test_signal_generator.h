@@ -12,8 +12,8 @@
  *
  * */
 
-#define MAIN_MENU_WINDOW_LINES 10
-#define MAIN_MENU_WINDOW_COLUMNS 50
+#define MAIN_MENU_SIZE 10, 50
+#define MAIN_MENU_LOCATION 2, (COLS - 50) / 2
 #define MAIN_MENU_OPTIONS \
 { \
 	"Edit settings", \
@@ -25,8 +25,11 @@
 	"Export combined waveform" \
 }
 
-#define FILE_WINDOW_LINES 8
-#define FILE_WINDOW_COLUMNS 50
+#define OUTPUT_WINDOW_SIZE 20, 50
+#define OUTPUT_WINDOW_LOCATION 13, (COLS - 50) / 2
+
+#define POPUP_WINDOW_SIZE 20, 60
+#define POPUP_WINDOW_LOCATION 10, 10
 
 #define FILE_MENU_OPTIONS \
 { \
@@ -34,6 +37,3 @@
 	"   Ok   ", \
 	" Cancel " \
 }
-
-#define EDIT_WINDOW_LINES 20
-#define EDIT_WINDOW_COLUMNS 50
