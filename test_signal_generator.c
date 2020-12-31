@@ -17,27 +17,12 @@
 #include "ASCII_parser.h"
 
 #include<errno.h>
-#include<limits.h>
 #include<math.h>
 #include<stdlib.h>
-#include<stdio.h>
-#include<ncurses.h>
 
-struct Menu_item {
-	const int line;
-	const int column;
-	const char * text;
-};
-
-struct Menu {
-	WINDOW * window;
-	const struct Menu_item (*labels)[];
-	const int label_size;
-	const struct Menu_item (*options)[];
-	const int option_size;
-	int selected_option;
-	// pointer to commands (function array)
-};
+#include<menu.h>
+#include<form.h>
+#include<panel.h>
 
 long double string_to_long_double(char * string)
 {
@@ -168,110 +153,6 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 	fclose(fp);
 }
 
-void draw_menu(struct Menu menu)
-{
-	for (int i = 0; i < menu.label_size; i++)
-	{
-		mvwprintw(
-			menu.window,
-			(*menu.labels)[i].line,
-			(*menu.labels)[i].column,
-			(*menu.labels)[i].text
-		);
-	}
-	for (int i = 0; i < menu.option_size; i++)
-	{
-		if (i == menu.selected_option)
-		{
-			wattron(menu.window, A_REVERSE);
-			mvwprintw(
-				menu.window, 
-				(*menu.options)[i].line,
-				(*menu.options)[i].column,
-				(*menu.options)[i].text
-			);
-			wattroff(menu.window, A_REVERSE);
-		}
-		else
-		{
-			mvwprintw(
-				menu.window,
-				(*menu.options)[i].line,
-				(*menu.options)[i].column,
-				(*menu.options)[i].text
-			);
-		}
-	}
-	//wrefresh(menu.window);
-}
-
-int get_input(WINDOW * win)
-{
-	int command = DO_NOTHING;
-	keypad(win, true); // For arrow key presses
-	int c = wgetch(win); // refreshes window as well
-	switch(c)
-	{	
-		case KEY_UP :
-		case KEY_LEFT :
-			command = SELECT_PREVIOUS_OPTION;
-			break;
-		case KEY_DOWN :
-		case KEY_RIGHT :
-			command = SELECT_NEXT_OPTION;
-			break;
-		case '\n' :
-			command = EXECUTE_SELECTED_OPTION;
-			break;
-		case 'q' :
-			command = QUIT;
-			break;
-		default :
-			command = DO_NOTHING;
-			break;
-	}
-	return command;
-}
-
-int menu_interface(struct Menu *menu)
-{
-	char * s;
-	s = malloc(20);
-	int option = get_input(menu->window);
-	switch(option)
-	{
-		case SELECT_PREVIOUS_OPTION :
-			if (menu->selected_option > 0)
-			{
-				menu->selected_option--; 
-			}
-			draw_menu(*menu);
-			break;
-		case SELECT_NEXT_OPTION :
-			if (menu->selected_option < menu->option_size - 1)
-			{
-				menu->selected_option++;
-			}
-			draw_menu(*menu);
-			break;
-		case EXECUTE_SELECTED_OPTION :
-			//wprintw(menu->window, "Pressed enter.");
-			//mvwinnstr(menu->window, menu->selected_option+1, 2, s, 20);
-			wmove(menu->window, menu->option_size + 1, 2);
-			wprintw(menu->window, "%s\n", s);
-			break;
-		case QUIT :
-			wmove(menu->window, menu->option_size + 1, 2);
-			wprintw(menu->window, "Quitting...");
-			break;
-		default :
-			return -1;
-			break;
-	}
-	free(s);
-	return option;
-}
-
 int main(int argc, char** argv)
 {
 /*	if (argc > 2)
@@ -291,78 +172,75 @@ int main(int argc, char** argv)
 	noecho();	// User input is not echoed
 	curs_set(0);	// Hide cursor
 
-	int row_max, column_max; // Functions to get line/column coords
-	getmaxyx(stdscr, row_max, column_max);
-	if(row_max < 0 || column_max < 0)
+	MENU *main_menu;
+	ITEM **main_menu_items;
+	WINDOW * menu_window = newwin(
+		MAIN_MENU_WINDOW_LINES,
+		MAIN_MENU_WINDOW_COLUMNS,
+		2,
+		(COLS - MAIN_MENU_WINDOW_COLUMNS) / 2
+	);
+	const char * main_menu_options[] = MAIN_MENU_OPTIONS;
+	const int main_menu_item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);;
+	
+
+	main_menu_items = (ITEM **)calloc(main_menu_item_count + 1, sizeof(ITEM *));
+	for(int i = 0; i < main_menu_item_count; ++i)
 	{
-		// PLACEHOLDER - TEST FOR MINIMUM SCREEN SIZE
-		printf("Insufficient screen space in current console");
+		main_menu_items[i] = new_item(main_menu_options[i], "");
 	}
+	main_menu_items[main_menu_item_count] = (ITEM *)NULL;
 
-	const struct Menu_item main_menu_items[] = MAIN_MENU_OPTIONS;
-	struct Menu main_menu = {
-		.window = newwin(
-			MAIN_MENU_WINDOW_LINES,
-			MAIN_MENU_WINDOW_COLUMNS,
-			4,
-			(column_max - MAIN_MENU_WINDOW_COLUMNS) / 2
-		),
-		.labels = NULL,
-		.label_size = 0,
-		.options = &main_menu_items,
-		.option_size = sizeof(main_menu_items) / sizeof(main_menu_items[0]),
-		.selected_option = 0
-	};
-	box(main_menu.window, 0, 0);	
-
-	const struct Menu_item file_menu_labels[] = FILE_MENU_LABELS;
-	const struct Menu_item file_menu_options[] = FILE_MENU_OPTIONS;
-	struct Menu file_menu = {
-		.window = newwin(
-			FILE_WINDOW_LINES,
-			FILE_WINDOW_COLUMNS,
-			2,
-			(column_max - FILE_WINDOW_COLUMNS) / 2
-		),
-		.labels = &file_menu_labels,
-		.label_size = sizeof(file_menu_labels) / sizeof(file_menu_labels[0]),
-		.options = &file_menu_options,
-		.option_size = sizeof(file_menu_options) / sizeof(file_menu_options[0]),
-		.selected_option = 0
-	};
-	box(file_menu.window, 0, 0);
+	main_menu = new_menu((ITEM **)main_menu_items);
+	set_menu_win(main_menu, menu_window);
+	set_menu_sub(main_menu, derwin(menu_window, 0, 0, 1, 1));
+	set_menu_mark(main_menu, " * ");
+	
+	post_menu(main_menu);
+	box(menu_window, 0, 0);
+	wrefresh(menu_window);
 
 	WINDOW * output_window = newwin(
 			EDIT_WINDOW_LINES, 
 			EDIT_WINDOW_COLUMNS,
 		       	4 + MAIN_MENU_WINDOW_LINES, 
-		       	(column_max - MAIN_MENU_WINDOW_COLUMNS) / 2);
-	box(output_window, 0, 0);
-	
-	refresh(); // Screen level refresh
+		       	(COLS - MAIN_MENU_WINDOW_COLUMNS) / 2);
+	box(output_window, 0, 0);	
+	wrefresh(output_window);
 
 	// Debug
 	mvwprintw(output_window, 1, 2, "Sampling frequency: 555 kHz");
 	mvwprintw(output_window, 2, 2, "Sample count:       1000");
 	mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
-	wrefresh(output_window);
-
-	//int selected_menu_option = 1;
-	draw_menu(main_menu);
-	while(1) 
+	wnoutrefresh(output_window);
+	
+	int c;
+	keypad(menu_window, TRUE);
+	while((c = wgetch(menu_window)) != 'q')
 	{
-		//int action = menu_interface(&main_menu);
-		//wrefresh(main_menu.window);
-		int action = menu_interface(&file_menu);
-		wrefresh(file_menu.window);
-		if(action == QUIT)
+		switch(c)
 		{
-			endwin(); // Deallocate memory and end ncurses
-			return 1;
+			case KEY_DOWN :
+				menu_driver(main_menu, REQ_DOWN_ITEM);
+				break;
+			case KEY_UP :
+				menu_driver(main_menu, REQ_UP_ITEM);
+				break;
+			case '\n' :
+				break;
 		}
 		// Debug
-		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.option_size);
-		mvwprintw(output_window, 6, 2, "Selected option: %d", main_menu.selected_option);
-		wrefresh(output_window);
+		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu_item_count);
+		mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu)));
+		wnoutrefresh(output_window);
+		doupdate();
+
 	}
+
+	unpost_menu(main_menu);
+	free_menu(main_menu);
+	for(int i =0; i < main_menu_item_count; i++)
+		free_item(main_menu_items[i]);
+	endwin();
+	return 1;
 }	

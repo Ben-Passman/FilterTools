@@ -1,5 +1,5 @@
 all: hello
 
 hello: test_signal_generator.c
-	gcc -lncurses -Wall test_signal_generator.c -o test_signal_generator -lm
+	gcc -Wall test_signal_generator.c -o test_signal_generator -lm -lpanel -lmenu -lncurses
 
