@@ -24,6 +24,12 @@
 #include<form.h>
 #include<panel.h>
 
+struct Menu {
+	MENU * menu;
+	ITEM ** items;
+	int item_count;
+};
+
 long double string_to_long_double(char * string)
 {
 	errno = 0;
@@ -153,6 +159,38 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 	fclose(fp);
 }
 
+struct Menu main_menu_setup(WINDOW * menu_window)
+{
+	struct Menu main_menu;
+	const char * main_menu_options[] = MAIN_MENU_OPTIONS;
+	main_menu.item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);
+
+	main_menu.items = (ITEM **)calloc(main_menu.item_count + 1, sizeof(ITEM *));
+	for(int i = 0; i < main_menu.item_count; ++i)
+	{
+		main_menu.items[i] = new_item(main_menu_options[i], "");
+	}
+	main_menu.items[main_menu.item_count] = (ITEM *)NULL;
+
+	main_menu.menu = new_menu((ITEM **)main_menu.items);
+	set_menu_win(main_menu.menu, menu_window);
+	set_menu_sub(main_menu.menu, derwin(menu_window, 0, 0, 1, 1));
+	set_menu_mark(main_menu.menu, " * ");
+	
+	post_menu(main_menu.menu);
+	box(menu_window, 0, 0);
+	
+	return main_menu;
+}
+
+void free_menu_struct(struct Menu menu_struct)
+{
+	unpost_menu(menu_struct.menu);
+	free_menu(menu_struct.menu);
+	for(int i =0; i < menu_struct.item_count; i++)
+		free_item(menu_struct.items[i]);
+}
+
 int main(int argc, char** argv)
 {
 /*	if (argc > 2)
@@ -171,35 +209,14 @@ int main(int argc, char** argv)
 	cbreak();	// Unbuffered input, enables Ctrl + C to exit ncurses (default)
 	noecho();	// User input is not echoed
 	curs_set(0);	// Hide cursor
-
-	MENU *main_menu;
-	ITEM **main_menu_items;
+	
 	WINDOW * menu_window = newwin(
 		MAIN_MENU_WINDOW_LINES,
 		MAIN_MENU_WINDOW_COLUMNS,
 		2,
 		(COLS - MAIN_MENU_WINDOW_COLUMNS) / 2
 	);
-	const char * main_menu_options[] = MAIN_MENU_OPTIONS;
-	const int main_menu_item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);;
 	
-
-	main_menu_items = (ITEM **)calloc(main_menu_item_count + 1, sizeof(ITEM *));
-	for(int i = 0; i < main_menu_item_count; ++i)
-	{
-		main_menu_items[i] = new_item(main_menu_options[i], "");
-	}
-	main_menu_items[main_menu_item_count] = (ITEM *)NULL;
-
-	main_menu = new_menu((ITEM **)main_menu_items);
-	set_menu_win(main_menu, menu_window);
-	set_menu_sub(main_menu, derwin(menu_window, 0, 0, 1, 1));
-	set_menu_mark(main_menu, " * ");
-	
-	post_menu(main_menu);
-	box(menu_window, 0, 0);
-	wrefresh(menu_window);
-
 	WINDOW * output_window = newwin(
 			EDIT_WINDOW_LINES, 
 			EDIT_WINDOW_COLUMNS,
@@ -216,6 +233,9 @@ int main(int argc, char** argv)
 	box(popup_window, 0, 0);
 	wrefresh(popup_window);
 
+	struct Menu main_menu = main_menu_setup(menu_window);
+	wrefresh(menu_window);	
+	
 	PANEL * popup_panel;
 	popup_panel = new_panel(popup_window);
 	update_panels();
@@ -249,16 +269,16 @@ int main(int argc, char** argv)
 	wrefresh(popup_window);
 	
 	int c;
-	/*keypad(menu_window, TRUE);
+	keypad(menu_window, TRUE);
 	while((c = wgetch(menu_window)) != 'q')
 	{
 		switch(c)
 		{
 			case KEY_DOWN :
-				menu_driver(main_menu, REQ_DOWN_ITEM);
+				menu_driver(main_menu.menu, REQ_DOWN_ITEM);
 				break;
 			case KEY_UP :
-				menu_driver(main_menu, REQ_UP_ITEM);
+				menu_driver(main_menu.menu, REQ_UP_ITEM);
 				break;
 			case '\n' :
 				if (panel_hidden(popup_panel))
@@ -269,18 +289,18 @@ int main(int argc, char** argv)
 				{
 					hide_panel(popup_panel);
 				}
+				update_panels();
+				doupdate();
+				break;
 		}
 	}
-	*/
-	//echo();
-	curs_set(1);
+	
+	/*curs_set(1);
 	keypad(popup_window, TRUE);
 	while((c = wgetch(popup_window)) != KEY_F(1))
 	{
 		switch(c)
 		{
-			case 27 :
-				return 1;
 			case KEY_DOWN :
 				form_driver(file_form, REQ_NEXT_FIELD);
 				form_driver(file_form, REQ_END_LINE);
@@ -303,8 +323,8 @@ int main(int argc, char** argv)
 			mvwprintw(output_window, 1, 2, "Sampling frequency: 555 kHz");
 			mvwprintw(output_window, 2, 2, "Sample count:       1000");
 			mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
-			mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu_item_count);
-			mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu)));
+			mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.item_count);
+			mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu.menu)));
 			wnoutrefresh(output_window);
 		}
 		else
@@ -314,12 +334,9 @@ int main(int argc, char** argv)
 		
 		update_panels();
 		doupdate();
-	}
+	}*/
 
-	unpost_menu(main_menu);
-	free_menu(main_menu);
-	for(int i =0; i < main_menu_item_count; i++)
-		free_item(main_menu_items[i]);
+	free_menu_struct(main_menu);
 
 	unpost_form(file_form);
 	free_form(file_form);
