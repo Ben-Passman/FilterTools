@@ -208,12 +208,19 @@ int main(int argc, char** argv)
 	box(output_window, 0, 0);	
 	wrefresh(output_window);
 
-	// Debug
-	mvwprintw(output_window, 1, 2, "Sampling frequency: 555 kHz");
-	mvwprintw(output_window, 2, 2, "Sample count:       1000");
-	mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
-	wnoutrefresh(output_window);
-	
+	WINDOW * popup_window = newwin(
+			20, 
+			100,
+			10,
+			10);
+	box(popup_window, 0, 0);
+	wrefresh(popup_window);
+
+	PANEL * popup_panel;
+	popup_panel = new_panel(popup_window);
+	update_panels();
+	doupdate();
+
 	int c;
 	keypad(menu_window, TRUE);
 	while((c = wgetch(menu_window)) != 'q')
@@ -227,14 +234,34 @@ int main(int argc, char** argv)
 				menu_driver(main_menu, REQ_UP_ITEM);
 				break;
 			case '\n' :
+				if (panel_hidden(popup_panel))
+				{
+					show_panel(popup_panel);
+				}
+				else
+				{
+					hide_panel(popup_panel);
+				}
 				break;
 		}
-		// Debug
-		mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu_item_count);
-		mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu)));
-		wnoutrefresh(output_window);
+	
+		if (panel_hidden(popup_panel))
+		{
+			// Debug
+			mvwprintw(output_window, 1, 2, "Sampling frequency: 555 kHz");
+			mvwprintw(output_window, 2, 2, "Sample count:       1000");
+			mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
+			mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu_item_count);
+			mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu)));
+			wnoutrefresh(output_window);
+		}
+		else
+		{
+			wclear(output_window);
+		}	
+		
+		update_panels();
 		doupdate();
-
 	}
 
 	unpost_menu(main_menu);
