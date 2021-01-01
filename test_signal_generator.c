@@ -30,6 +30,12 @@ struct Menu {
 	int item_count;
 };
 
+struct Form {
+	FORM * form;
+	FIELD ** fields;
+	int field_count;
+};
+
 long double string_to_long_double(char * string)
 {
 	errno = 0;
@@ -166,6 +172,7 @@ struct Menu main_menu_setup(WINDOW * menu_window)
 	main_menu.item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);
 
 	main_menu.items = (ITEM **)calloc(main_menu.item_count + 1, sizeof(ITEM *));
+
 	for(int i = 0; i < main_menu.item_count; ++i)
 	{
 		main_menu.items[i] = new_item(main_menu_options[i], "");
@@ -182,12 +189,54 @@ struct Menu main_menu_setup(WINDOW * menu_window)
 	return main_menu;
 }
 
+struct Form form_setup(WINDOW * form_window)
+{
+	struct Form this_form;
+	this_form.field_count = 3;
+
+	this_form.fields = (FIELD **)calloc(this_form.field_count + 1, sizeof(FIELD *));
+
+	this_form.fields[0] = new_field(1, 10, 4, 18, 0, 0);
+	this_form.fields[1] = new_field(1, 10, 6, 18, 0, 0);
+	this_form.fields[2] = new_field(1, 10, 8, 18, 0, 0);
+	this_form.fields[3] = NULL;
+
+	set_field_back(this_form.fields[0], A_UNDERLINE);
+	field_opts_off(this_form.fields[0], O_AUTOSKIP);
+	set_field_buffer(this_form.fields[1], 0, "Testing...");
+	set_field_back(this_form.fields[1], A_UNDERLINE);
+	field_opts_off(this_form.fields[1], O_AUTOSKIP);
+	set_field_back(this_form.fields[2], A_UNDERLINE);
+	field_opts_off(this_form.fields[2], O_AUTOSKIP);	
+
+	int rows = 8;
+	int cols = 28;
+	this_form.form = new_form(this_form.fields);
+	scale_form(this_form.form, &rows, &cols);
+	set_form_win(this_form.form, form_window);
+	set_form_sub(this_form.form, derwin(form_window, rows, cols, 2, 2));
+	post_form(this_form.form);
+
+	mvwprintw(form_window, 4, 10, "Value 1:");
+	mvwprintw(form_window, 6, 10, "Value 2:");
+
+	return this_form;
+}
+
 void free_menu_struct(struct Menu menu_struct)
 {
 	unpost_menu(menu_struct.menu);
 	free_menu(menu_struct.menu);
 	for(int i =0; i < menu_struct.item_count; i++)
 		free_item(menu_struct.items[i]);
+}
+
+void free_form_struct(struct Form form_struct)
+{
+	unpost_form(form_struct.form);
+	free_form(form_struct.form);
+	for(int i = 0; i < form_struct.field_count; i++)
+		free_field(form_struct.fields[i]);
 }
 
 int main(int argc, char** argv)
@@ -210,47 +259,28 @@ int main(int argc, char** argv)
 	curs_set(0);	// Hide cursor
 	
 	WINDOW * menu_window = newwin(MAIN_MENU_SIZE, MAIN_MENU_LOCATION);
-	struct Menu main_menu = main_menu_setup(menu_window);
-	wrefresh(menu_window);		
-	
 	WINDOW * output_window = newwin(OUTPUT_WINDOW_SIZE, OUTPUT_WINDOW_LOCATION);
-	wrefresh(output_window);
-
 	WINDOW * popup_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
-	box(popup_window, 0, 0);
-	wrefresh(popup_window);
+		
+	box(menu_window, 0, 0);
+	box(output_window, 0, 0);
+	box(popup_window, 0, 0);	
 	
+	struct Menu main_menu = main_menu_setup(menu_window);
+
+	PANEL * menu_panel;
+	PANEL *	output_panel;
 	PANEL * popup_panel;
+	menu_panel = new_panel(menu_window);
+	output_panel = new_panel(output_window);
 	popup_panel = new_panel(popup_window);
+	hide_panel(popup_panel);
 	update_panels();
 
-	FIELD * file_fields[4];
-	FORM * file_form;
-	file_fields[0] = new_field(1, 10, 4, 18, 0, 0);
-	file_fields[1] = new_field(1, 10, 6, 18, 0, 0);
-	file_fields[2] = new_field(1, 10, 8, 18, 0, 0);
-	file_fields[3] = NULL;
-
-	set_field_back(file_fields[0], A_UNDERLINE);
-	field_opts_off(file_fields[0], O_AUTOSKIP);
-	set_field_buffer(file_fields[1], 0, "Testing...");
-	set_field_back(file_fields[1], A_UNDERLINE);
-	field_opts_off(file_fields[1], O_AUTOSKIP);
-	set_field_back(file_fields[2], A_UNDERLINE);
-	field_opts_off(file_fields[2], O_AUTOSKIP);	
-
-	int rows = 8;
-	int cols = 28;
-	file_form = new_form(file_fields);
-	scale_form(file_form, &rows, &cols);
-	set_form_win(file_form, popup_window);
-	set_form_sub(file_form, derwin(popup_window, rows, cols, 2, 2));
-	post_form(file_form);
-
-	mvwprintw(popup_window, 4, 10, "Value 1:");
-	mvwprintw(popup_window, 6, 10, "Value 2:");
-	wrefresh(popup_window);
+	struct Form file_form = form_setup(popup_window);
 	
+	doupdate();
+
 	// MENU INTERFACE
 	int c;
 	keypad(menu_window, TRUE);
@@ -268,10 +298,15 @@ int main(int argc, char** argv)
 				if (panel_hidden(popup_panel))
 				{
 					show_panel(popup_panel);
+					hide_panel(menu_panel);
+					hide_panel(output_panel);
+					bottom_panel(menu_panel);
 				}
 				else
 				{
 					hide_panel(popup_panel);
+					show_panel(menu_panel);
+					show_panel(output_panel);
 				}
 				break;
 		}
@@ -284,19 +319,10 @@ int main(int argc, char** argv)
 			mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
 			mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.item_count);
 			mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu.menu)));
-			box(menu_window, 0, 0);
-			box(output_window, 0, 0);
-			wnoutrefresh(menu_window);
-			wnoutrefresh(output_window);
 		}
-		else
-		{
-			wclear(output_window);
-		}	
-		
-		update_panels();
-		doupdate();	
 
+		update_panels();
+		doupdate();
 	}
 	
 	// FORM INTERFACE
@@ -307,18 +333,18 @@ int main(int argc, char** argv)
 		switch(c)
 		{
 			case KEY_DOWN :
-				form_driver(file_form, REQ_NEXT_FIELD);
-				form_driver(file_form, REQ_END_LINE);
+				form_driver(file_form.form, REQ_NEXT_FIELD);
+				form_driver(file_form.form, REQ_END_LINE);
 				break;
 			case KEY_UP :
-				form_driver(file_form, REQ_PREV_FIELD);
-				form_driver(file_form, REQ_END_LINE);
+				form_driver(file_form.form, REQ_PREV_FIELD);
+				form_driver(file_form.form, REQ_END_LINE);
 				break;
 			case '\n' :
 				
 				break;
 			default :
-				form_driver(file_form, c);
+				form_driver(file_form.form, c);
 				break;
 		}
 
@@ -326,12 +352,7 @@ int main(int argc, char** argv)
 	}*/
 
 	free_menu_struct(main_menu);
-
-	unpost_form(file_form);
-	free_form(file_form);
-	for(int i = 0; i < 4; i++)
-		free_field(file_fields[i]);
-
+	free_form_struct(file_form);
 	endwin();
 	return 1;
 }	
