@@ -16,13 +16,14 @@
 #include "test_signal_generator.h"
 #include "ASCII_parser.h"
 
-#include<errno.h>
-#include<math.h>
-#include<stdlib.h>
+#include <errno.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include<menu.h>
-#include<form.h>
-#include<panel.h>
+#include <menu.h>
+#include <form.h>
+#include <panel.h>
 
 struct Menu {
 	MENU * menu;
@@ -165,6 +166,20 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 	fclose(fp);
 }
 
+void validate_numeric(FORM *form)
+{
+	form_driver(form, REQ_VALIDATION); // Force validation to update buffer contents
+	
+	char * buffer_contents = field_buffer(current_field(form), 0);
+	char *temp = (char *) calloc(strlen(buffer_contents), sizeof(char));				
+	
+	copy_non_whitespace(buffer_contents, temp);
+	format_number_string(temp, REGEX_NUMERIC_PATTERN, temp);
+	set_field_buffer(current_field(form), 0, temp);
+	
+	free(temp);
+}
+
 struct Menu main_menu_setup(WINDOW * menu_window)
 {
 	struct Menu main_menu;
@@ -192,33 +207,49 @@ struct Menu main_menu_setup(WINDOW * menu_window)
 struct Form form_setup(WINDOW * form_window)
 {
 	struct Form this_form;
-	this_form.field_count = 3;
+	this_form.field_count = 5;
 
 	this_form.fields = (FIELD **)calloc(this_form.field_count + 1, sizeof(FIELD *));
 
-	this_form.fields[0] = new_field(1, 10, 4, 18, 0, 0);
-	this_form.fields[1] = new_field(1, 10, 6, 18, 0, 0);
-	this_form.fields[2] = new_field(1, 10, 8, 18, 0, 0);
-	this_form.fields[3] = NULL;
-
+	this_form.fields[0] = new_field(1, 20, 0, 0, 0, 0);
 	set_field_back(this_form.fields[0], A_UNDERLINE);
-	field_opts_off(this_form.fields[0], O_AUTOSKIP);
-	set_field_buffer(this_form.fields[1], 0, "Testing...");
-	set_field_back(this_form.fields[1], A_UNDERLINE);
-	field_opts_off(this_form.fields[1], O_AUTOSKIP);
-	set_field_back(this_form.fields[2], A_UNDERLINE);
-	field_opts_off(this_form.fields[2], O_AUTOSKIP);	
+	field_opts_off(this_form.fields[0], O_STATIC);
+	set_max_field(this_form.fields[0], 1024);
+
+	this_form.fields[1] = dup_field(this_form.fields[0], 2, 0);
+//	set_field_type(this_form.fields[1], TYPE_NUMERIC);
+
+	this_form.fields[2] = new_field(1, 20, 4, 0, 0, 0);
+
+	this_form.fields[3] = new_field(1, 8, 6, 0, 0, 0);
+	
+	this_form.fields[4] = dup_field(this_form.fields[3], 8, 0);
+	this_form.fields[5] = NULL;
+
+	for (int i = 0; i < this_form.field_count; i++)
+	{
+		field_opts_off(this_form.fields[i], O_AUTOSKIP);
+	}
+	
+	set_field_buffer(this_form.fields[2], 0, "Option 1");
+	set_field_buffer(this_form.fields[3], 0, "   Ok   ");
+	set_field_buffer(this_form.fields[4], 0, " Cancel ");
 
 	int rows = 8;
 	int cols = 28;
 	this_form.form = new_form(this_form.fields);
 	scale_form(this_form.form, &rows, &cols);
 	set_form_win(this_form.form, form_window);
-	set_form_sub(this_form.form, derwin(form_window, rows, cols, 2, 2));
+	set_form_sub(this_form.form, derwin(form_window, rows, cols, 2, 15));
+	form_opts_off(this_form.form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
 	post_form(this_form.form);
 
-	mvwprintw(form_window, 4, 10, "Value 1:");
-	mvwprintw(form_window, 6, 10, "Value 2:");
+	mvwprintw(form_window, 2, 4, "Path:"); // Highlight on select, cursor on active
+	mvwprintw(form_window, 4, 4, "Number:"); // Highlight on select, cursor on active
+	mvwprintw(form_window, 6, 4, "List:"); // Highlight on select
+	mvwprintw(form_window, 8, 4, "Button:"); // Dim, highlight on select
+
+// label, type, position
 
 	return this_form;
 }
@@ -237,6 +268,46 @@ void free_form_struct(struct Form form_struct)
 	free_form(form_struct.form);
 	for(int i = 0; i < form_struct.field_count; i++)
 		free_field(form_struct.fields[i]);
+}
+
+void form_highlight_active(const FORM * form)
+{
+	for(int i = 0; i < form->maxfield; i++)
+	{
+		set_field_back(form->field[i], A_NORMAL);
+	}
+	set_field_back(current_field(form), A_REVERSE);
+}
+
+void update_field_text(WINDOW * window, FORM * form)
+{
+	//FIELD * active_field = current_field(form);
+	int c = 0;
+	curs_set(1);
+	
+	while((c= wgetch(window)) != '\n')
+	{
+		switch(c)
+		{
+			case KEY_LEFT :
+				form_driver(form, REQ_PREV_CHAR);
+				break;
+			case KEY_RIGHT :
+				form_driver(form, REQ_NEXT_CHAR);
+				break;
+			case KEY_BACKSPACE :
+			case 127 :
+				form_driver(form, REQ_DEL_PREV);
+				break;
+			case KEY_DC :
+				form_driver(form, REQ_DEL_CHAR);
+				break;
+			default :
+				form_driver(form, c);
+				break;		
+		}
+	}
+	curs_set(0);
 }
 
 int main(int argc, char** argv)
@@ -264,7 +335,7 @@ int main(int argc, char** argv)
 		
 	box(menu_window, 0, 0);
 	box(output_window, 0, 0);
-	box(popup_window, 0, 0);	
+	box(popup_window, 0, 0);
 	
 	struct Menu main_menu = main_menu_setup(menu_window);
 
@@ -274,7 +345,10 @@ int main(int argc, char** argv)
 	menu_panel = new_panel(menu_window);
 	output_panel = new_panel(output_window);
 	popup_panel = new_panel(popup_window);
-	hide_panel(popup_panel);
+show_panel(menu_panel);
+show_panel(output_panel);
+show_panel(popup_panel);
+	//hide_panel(popup_panel);
 	update_panels();
 
 	struct Form file_form = form_setup(popup_window);
@@ -282,8 +356,8 @@ int main(int argc, char** argv)
 	doupdate();
 
 	// MENU INTERFACE
-	int c;
-	keypad(menu_window, TRUE);
+	int c = 0;
+/*	keypad(menu_window, TRUE);
 	while((c = wgetch(menu_window)) != 'q')
 	{
 		switch(c)
@@ -323,33 +397,55 @@ int main(int argc, char** argv)
 
 		update_panels();
 		doupdate();
-	}
+	}*/
 	
 	// FORM INTERFACE
-	/*curs_set(1);
+	//curs_set(1);
+	form_highlight_active(file_form.form);
 	keypad(popup_window, TRUE);
-	while((c = wgetch(popup_window)) != KEY_F(1))
+	
+	while(c != 'q')
 	{
+		int index = field_index(current_field(file_form.form));
+		c = wgetch(popup_window);
 		switch(c)
 		{
 			case KEY_DOWN :
 				form_driver(file_form.form, REQ_NEXT_FIELD);
-				form_driver(file_form.form, REQ_END_LINE);
+				form_highlight_active(file_form.form);
 				break;
 			case KEY_UP :
 				form_driver(file_form.form, REQ_PREV_FIELD);
-				form_driver(file_form.form, REQ_END_LINE);
+				form_highlight_active(file_form.form);
 				break;
 			case '\n' :
-				
+				switch(index)
+				{
+					case PATH_FIELD :
+						form_driver(file_form.form, REQ_END_LINE);
+						update_field_text(popup_window, file_form.form);
+						break;
+					case NUMBER_FIELD :
+						form_driver(file_form.form, REQ_END_LINE);
+						update_field_text(popup_window, file_form.form);
+						break;
+					case LIST_FIELD :
+						form_driver(file_form.form, REQ_END_LINE);
+						update_field_text(popup_window, file_form.form);
+						break;
+					case OK_FIELD :
+					case CANCEL_FIELD :
+						c = 'q';
+						break;
+				}
+				validate_numeric(file_form.form);
+				mvwprintw(popup_window, 12, 2, "Selected: %d", index);
+				mvwprintw(popup_window, 13, 2, "Buffer changed to: %s", field_buffer(current_field(file_form.form), 0));
 				break;
 			default :
-				form_driver(file_form.form, c);
 				break;
 		}
-
-		
-	}*/
+	}
 
 	free_menu_struct(main_menu);
 	free_form_struct(file_form);

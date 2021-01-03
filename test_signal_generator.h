@@ -29,11 +29,19 @@
 #define OUTPUT_WINDOW_LOCATION 13, (COLS - 50) / 2
 
 #define POPUP_WINDOW_SIZE 20, 60
-#define POPUP_WINDOW_LOCATION 10, 15
+#define POPUP_WINDOW_LOCATION 10, (COLS - 60) / 2
 
-#define FILE_MENU_OPTIONS \
-{ \
-	"~/Documents/test.txt", \
-	"   Ok   ", \
-	" Cancel " \
-}
+const char * WAVE_LIST[] = {
+	"SINE",
+	"SAWTOOTH",
+	"TRIANGLE",
+	"SQUARE"
+};
+
+enum field_type {
+	PATH_FIELD,
+	NUMBER_FIELD,
+	LIST_FIELD,
+	OK_FIELD,
+	CANCEL_FIELD
+};

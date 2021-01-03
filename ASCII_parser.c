@@ -17,6 +17,131 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <regex.h>
+
+char SI_prefixes[17] = {
+    'y',
+    'z',
+    'a',
+    'f',
+    'p',
+    'n',
+    'u',
+    'm',
+    ' ',
+    'k',
+    'M',
+    'G',
+    'T',
+    'P',
+    'E',
+    'Z',
+    'Y'
+};
+
+double SI_prefix_values[58] = {
+    1.0, // 'A'
+    1.0,
+    1.0, 
+    1.0, 
+    1000000000000000000.0, // 'E'
+    1.0, 
+    1000000000.0, // 'G'
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    1000000.0, // 'M'
+    1.0, 
+    1.0, 
+    1000000000000000.0, // 'P'
+    1.0, 
+    1.0, 
+    1.0, 
+    1000000000000.0, // 'T'
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    1000000000000000000000000.0, // 'Y'
+    1000000000000000000000.0, // 'Z'
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0,
+    1.0,
+    0.000000000000000001, // 'a'
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    0.000000000000001, // 'f'
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    1000.0,  // 'k'
+    1.0, 
+    0.001, // 'm'
+    0.000000001, // 'n'
+    1.0, 
+    0.000000000001, // 'p'
+    1.0, 
+    1.0, 
+    1.0, 
+    1.0, 
+    0.000001, // 'u'
+    1.0, 
+    1.0, 
+    1.0, 
+    0.000000000000000000000001, 
+    0.000000000000000000001 // 'z'
+};
+
+void copy_non_whitespace(const char *source, char *target)
+{
+	int i = 0;
+	int count = 0;
+	while (*(source + i) != '\0')
+	{
+		if(*(source + i) != ' ')
+		{
+			*(target + count) = *(source + i);
+			count++;
+		}
+		i++;
+	}
+	*(target + count) = '\0';
+}
+
+int format_number_string(const char *string, const char *pattern, char *result)
+{
+	regex_t regex;
+	if (regcomp(&regex, pattern, REG_EXTENDED) != 0)
+	{
+		printf("Regular expression failed to compile\n");
+		regfree(&regex);
+		return 0;
+	}
+
+	regmatch_t match;
+	int status = regexec(&regex, string, 1, &match, 0);
+
+	int index = 0;
+	if (status == 0)
+	{
+		for (int i = match.rm_so; i < match.rm_eo; i++)
+		{
+			*(result + index++) = *(string + i);
+		}
+	}
+	*(result + index) = '\0';
+
+	regfree(&regex);
+	return 1 - status;
+}
 
 int ASCII_char_to_int(const char c)
 {
@@ -36,15 +161,15 @@ double get_sign(const char * string, int * index)
     double sign = 1.0;
     while (*index < length && ASCII_char_to_int(string[*index]) < 0 && string[*index] != ',' && string[*index] != '.')
     {
-	if(string[*index] == '-')
-	{
-	    sign = -1.0;
-	}
-	else if (string[*index] != ' ')
-	{   
-	    sign = 1.0;
-	}
-	(*index)++;
+		if(string[*index] == '-')
+		{
+	    	sign = -1.0;
+		}
+		else if (string[*index] != ' ')
+		{   
+		    sign = 1.0;
+		}
+		(*index)++;
     }
 
     return sign;
@@ -193,7 +318,7 @@ void print_SI(double number)
     printf("%lf%c\n", number, SI_prefixes[index]);
 }
 
-int main(int argc, char ** argv)
+/*int main(int argc, char ** argv)
 {
     if(argc > 1)
     {
@@ -203,4 +328,4 @@ int main(int argc, char ** argv)
 	print_SI(number);
     }
     return 0;
-}
+}*/
