@@ -12,11 +12,8 @@
  *
  ************************************************************************************************ */
 
-#define REGEX_NUMERIC_PATTERN "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
-
-#define SI_DEFAULT 8
-#define char_to_SI_value(char) SI_prefix_values[char-65]
-
-void copy_non_whitespace(const char *, char *);
-int format_number_string(const char *, const char *, char *);
-double ASCII_string_to_double(const char *);
+void strip_whitespace(const char *string, char *new_string);
+int format_number_string(const char *string, const char *expression, char *result);
+double ASCII_string_to_double(const char *string);
+void print_scientific(double number);
+void print_SI(double number);

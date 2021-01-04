@@ -8,118 +8,54 @@
  *
  * Revision History:
  * Date		Author		Rev	Notes
- * 27/12/2020	Ben P		1.0	File created. Added functions to parse ASCII text to double.
- * 					Supports SI suffuxes and base 10 exponents.
+ * 27/12/2020	Ben P	1.0	File created. Added functions to parse ASCII text to double.
+ * 								Supports SI suffuxes and base 10 exponents.
  *
  ************************************************************************************************ */
 
 #include "ASCII_parser.h"
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
 #include <math.h>
 #include <regex.h>
 
-char SI_prefixes[17] = {
-    'y',
-    'z',
-    'a',
-    'f',
-    'p',
-    'n',
-    'u',
-    'm',
-    ' ',
-    'k',
-    'M',
-    'G',
-    'T',
-    'P',
-    'E',
-    'Z',
-    'Y'
-};
+#define ASCII_CHAR_IS_INT(c) c >= '0' && c <= '9'
+#define INT_CHAR_TO_INT(c) (int) (c - '0')
+#define INT_CHAR_TO_DOUBLE(c) (double) (c - '0')
 
+#define SI_PREFIX_OFFSET 8
+char SI_prefixes[17] = { 'y', 'z', 'a', 'f', 'p', 'n', 'u', 'm', ' ', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y' };
+
+#define char_to_SI_value(char) SI_prefix_values[char-'A']
 double SI_prefix_values[58] = {
-    1.0, // 'A'
-    1.0,
-    1.0, 
-    1.0, 
-    1000000000000000000.0, // 'E'
-    1.0, 
-    1000000000.0, // 'G'
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    1000000.0, // 'M'
-    1.0, 
-    1.0, 
-    1000000000000000.0, // 'P'
-    1.0, 
-    1.0, 
-    1.0, 
-    1000000000000.0, // 'T'
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    1000000000000000000000000.0, // 'Y'
-    1000000000000000000000.0, // 'Z'
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0,
-    1.0,
-    0.000000000000000001, // 'a'
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    0.000000000000001, // 'f'
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    1000.0,  // 'k'
-    1.0, 
-    0.001, // 'm'
-    0.000000001, // 'n'
-    1.0, 
-    0.000000000001, // 'p'
-    1.0, 
-    1.0, 
-    1.0, 
-    1.0, 
-    0.000001, // 'u'
-    1.0, 
-    1.0, 
-    1.0, 
-    0.000000000000000000000001, 
-    0.000000000000000000001 // 'z'
+	1.0, 1.0, 1.0, 1.0, 1E18, 1.0, 1E9, 1.0, 1.0, 1.0, 1.0, 1.0, 1E6, 1.0, 
+	1.0, 1E15, 1.0, 1.0, 1.0, 1E12, 1.0, 1.0, 1.0, 1.0, 1E24, 1E21,	1.0, 1.0, 
+	1.0, 1.0, 1.0, 1.0, 1E-18, 1.0, 1.0, 1.0, 1.0, 1E-15, 1.0, 1.0, 1.0, 1.0, 1E3, 
+	1.0, 1E-3, 1E-9, 1.0, 1E-12, 1.0, 1.0, 1.0, 1.0, 1E-6, 1.0, 1.0, 1.0, 1E-24, 1E-21
 };
 
-void copy_non_whitespace(const char *source, char *target)
+// Assumes new_string has sufficient capacity
+void strip_whitespace(const char *string, char *new_string)
 {
 	int i = 0;
 	int count = 0;
-	while (*(source + i) != '\0')
+	while (*(string + i) != '\0')
 	{
-		if(*(source + i) != ' ')
+		if(*(string + i) != ' ')
 		{
-			*(target + count) = *(source + i);
+			*(new_string + count) = *(string + i);
 			count++;
 		}
 		i++;
 	}
-	*(target + count) = '\0';
+	*(new_string + count) = '\0';
 }
 
-int format_number_string(const char *string, const char *pattern, char *result)
+// Assumes result has sufficient capacity
+int format_number_string(const char *string, const char *expression, char *result)
 {
 	regex_t regex;
-	if (regcomp(&regex, pattern, REG_EXTENDED) != 0)
+	if (regcomp(&regex, expression, REG_EXTENDED) != 0)
 	{
 		printf("Regular expression failed to compile\n");
 		regfree(&regex);
@@ -143,189 +79,144 @@ int format_number_string(const char *string, const char *pattern, char *result)
 	return 1 - status;
 }
 
-int ASCII_char_to_int(const char c)
+// Parsing functions assume correct formatting and no whitespace
+static double get_integer(const char *string, int *offset)
 {
-    if (c > 47 && c < 58) // if input char is '0'-'9'
-    {
-        return (int) c - 48; // (int) '0' = 48;
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-double get_sign(const char * string, int * index)
-{
-    int length = strlen(string);
-    double sign = 1.0;
-    while (*index < length && ASCII_char_to_int(string[*index]) < 0 && string[*index] != ',' && string[*index] != '.')
-    {
-		if(string[*index] == '-')
-		{
-	    	sign = -1.0;
-		}
-		else if (string[*index] != ' ')
-		{   
-		    sign = 1.0;
-		}
-		(*index)++;
-    }
-
-    return sign;
-}
-
-double get_integer(const char * string, int * index)
-{
-    int length = strlen(string);
-    double integer = 0.0;
-    while (*index < length)
-    {
-	int test = ASCII_char_to_int(string[*index]);
-	if (test >= 0)
-	{
-		integer *= 10;
-		integer += test;
-	}
-	else if (string[*index] != ' ')
-	{
-		return integer;
-	}
-
-	(*index)++;
-    }
-    return integer;
-}
-
-double get_fraction(const char * string, int * index)
-{
-    int length = strlen(string);
-    double fraction = 0.0;
-    double power = 0.1;
-    while (*index < length)
-    {
-	int test = ASCII_char_to_int(string[*index]);
-	if (test >= 0)
-	{
-		fraction += test * power;
-		power /= 10.0;
-	}
-	else if (string[*index] != ' ')
-	{
-		return fraction;
-	}
+	int index = 0;
+	char c = *string;
+	double result = 0.0;
 	
-	(*index)++;
-    }
-
-    return fraction;
+	while(ASCII_CHAR_IS_INT(c))
+	{
+		result *= 10.0;
+		result += INT_CHAR_TO_DOUBLE(c);
+		index++;
+		c = *(string + index);
+	}
+	*offset = index;
+	return result;
 }
 
-double ASCII_string_to_double(const char * input)
+static double get_fraction(const char *string, int *offset)
 {
-    int length = strlen(input);
-    int index = 0;
-    double sign = 1.0;
-    double base = 0.0;
-    double exponent = 1.0;
-    
-    sign = get_sign(input, &index);
-    base = get_integer(input, &index);
-    if(index < length && (input[index] == ',' || input[index] == '.'))
-    {
-	index++;
-	base += get_fraction(input, &index);
-    }
-    base *= sign;
+	int index = 0;
+	char c = *string;
+	double power = 0.1;
+	double result = 0.0;
 
-    if(index < length && (input[index] == 'e' || input[index] == 'E'))
-    {
-	index++;
-	double exponent_sign = get_sign(input, &index);
-	exponent = get_integer(input, &index);
-	exponent *= exponent_sign;
-	base *= pow(10.0, exponent);
-	index = length;
-    }
-
-    while (index < length)
-    {
-	// check for SI suffix
-	switch(input[index])
+	while(ASCII_CHAR_IS_INT(c))
 	{
-	    case 'Y' :
-	    case 'Z' :
-	    case 'E' :
-	    case 'P' :
-	    case 'T' :
-	    case 'G' :
-	    case 'M' :
-	    case 'k' :
-	    case 'm' :
-	    case 'u' :
-	    case 'n' :
-	    case 'p' :
-	    case 'f' :
-	    case 'a' :
-	    case 'z' :
-	    case 'y' :
-		base *= char_to_SI_value((int)input[index]);
-		index = length;
-	    default :
-		break;
+		result += INT_CHAR_TO_DOUBLE(c) * power;
+		power *= 0.1;
+		index++;
+		c = *(string + index);
 	}
-	index++;
-    }
-    
-    return base;
+	*offset = index;
+	return result;
+}
+
+double ASCII_string_to_double(const char *string)
+{
+	int index = 0;
+	int offset;
+	double sign = 1.0;
+	double result = 0.0;
+
+	if (*string == '-')
+	{
+		sign = -1.0;
+		index++;
+	}
+
+	result = get_integer((string + index), &offset);
+	index += offset;
+
+	char c = *(string + index);
+	if(c == ',' || c == '.')
+	{
+		index++;
+		result += get_fraction((string + index), &offset);
+		index += offset;
+	}
+	result *= sign;
+
+	c = *(string + index);
+	if(c != '\0')
+	{
+		if(*(string + index + 1) == '\0')
+		{
+			result *= char_to_SI_value(c);
+		}
+		else if(c == 'e' || c == 'E')
+		{
+			double exponent_sign = 1.0;
+			double exponent = 0.0;
+
+			index++;
+			c = *(string + index);
+			if(c == '+')
+			{
+				index ++;
+			}
+			else if(c == '-')
+			{
+				exponent_sign = -1.0;
+				index++;
+			}
+			exponent = get_integer((string + index), &offset);			
+			result *= pow(10.0, exponent_sign * exponent); 
+		}
+	}
+
+	return result;
 }
 
 void print_scientific(double number)
 {
-    int exponent = 0;
-    if (number != 0.0)
-    {
-	while (number < 1 && number > -1)
+	int exponent = 0;
+	if (number != 0.0)
 	{
-	    number *= 10;
-	    exponent--;
+		while (number < 1 && number > -1)
+		{
+			number *= 10;
+			exponent--;
+		}
+		while (number >= 10 || number <= -10)
+		{
+			number *= 0.1;
+			exponent++;
+		}
 	}
-	while (number >= 10 || number <= -10)
-	{
-	    number /= 10;
-	    exponent++;
-	}
-    }
-    printf("%lfe%d\n", number, exponent);
+	printf("%lfe%d\n", number, exponent);
 }
 
 void print_SI(double number)
 {
-    int  index = SI_DEFAULT;
-    if(number != 0.0)
-    {
-	while (number < 1 && number > -1 && number != 0.0)
+	int index = SI_PREFIX_OFFSET;
+	if(number != 0.0)
 	{
-	    number *= 1000;
-	    index--;
+		while (number < 1 && number > -1 && number != 0.0)
+		{
+			number *= 1000;
+			index--;
+		}
+		while (number >= 1000 || number <= -1000)
+		{
+			number *= 0.001;
+			index++;
+		}
 	}
-	while (number >= 1000 || number <= -1000)
-	{
-	    number /= 1000;
-	    index++;
-	}
-    }
-    printf("%lf%c\n", number, SI_prefixes[index]);
+	printf("%lf%c\n", number, SI_prefixes[index]);
 }
 
 /*int main(int argc, char ** argv)
 {
-    if(argc > 1)
-    {
-	double number = ASCII_string_to_double(argv[1]);
-	printf("%lf\n", number);
-	print_scientific(number);
-	print_SI(number);
-    }
-    return 0;
+	if(argc > 1)
+	{
+		double number = ASCII_string_to_double(argv[1]);
+		printf("%lf\n", number);
+		print_scientific(number);
+		print_SI(number);
+	}
+	return 0;
 }*/

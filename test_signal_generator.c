@@ -16,41 +16,28 @@
 #include "test_signal_generator.h"
 #include "ASCII_parser.h"
 
-#include <errno.h>
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <errno.h>
 
 #include <menu.h>
 #include <form.h>
 #include <panel.h>
 
+#define NUMERIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
+
 struct Menu {
-	MENU * menu;
-	ITEM ** items;
+	MENU *menu;
+	ITEM **items;
 	int item_count;
 };
 
 struct Form {
-	FORM * form;
-	FIELD ** fields;
+	FORM *form;
+	FIELD **fields;
 	int field_count;
 };
-
-long double string_to_long_double(char * string)
-{
-	errno = 0;
-	char *endptr;
-	long double conv = strtod(string, &endptr);
-
-	if (errno != 0 || *endptr != '\0')
-	{
-		printf("Failed to parse string, error code %d\n", errno);
-		return errno;
-	}
-
-	return conv;
-}
 
 long double saw_wave(const long double t, const double freq, const double amplitude, const double phase, const double duty)
 {
@@ -170,23 +157,23 @@ void validate_numeric(FORM *form)
 {
 	form_driver(form, REQ_VALIDATION); // Force validation to update buffer contents
 	
-	char * buffer_contents = field_buffer(current_field(form), 0);
+	char *buffer_contents = field_buffer(current_field(form), 0);
 	char *temp = (char *) calloc(strlen(buffer_contents), sizeof(char));				
 	
-	copy_non_whitespace(buffer_contents, temp);
-	format_number_string(temp, REGEX_NUMERIC_PATTERN, temp);
+	strip_whitespace(buffer_contents, temp);
+	format_number_string(temp, NUMERIC_FIELD_REGEX, temp);
 	set_field_buffer(current_field(form), 0, temp);
 	
 	free(temp);
 }
 
-struct Menu main_menu_setup(WINDOW * menu_window)
+struct Menu main_menu_setup(WINDOW *menu_window)
 {
 	struct Menu main_menu;
-	const char * main_menu_options[] = MAIN_MENU_OPTIONS;
+	const char *main_menu_options[] = MAIN_MENU_OPTIONS;
 	main_menu.item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);
 
-	main_menu.items = (ITEM **)calloc(main_menu.item_count + 1, sizeof(ITEM *));
+	main_menu.items = (ITEM **) calloc(main_menu.item_count + 1, sizeof(ITEM *));
 
 	for(int i = 0; i < main_menu.item_count; ++i)
 	{
@@ -194,7 +181,7 @@ struct Menu main_menu_setup(WINDOW * menu_window)
 	}
 	main_menu.items[main_menu.item_count] = (ITEM *)NULL;
 
-	main_menu.menu = new_menu((ITEM **)main_menu.items);
+	main_menu.menu = new_menu((ITEM **) main_menu.items);
 	set_menu_win(main_menu.menu, menu_window);
 	set_menu_sub(main_menu.menu, derwin(menu_window, 0, 0, 1, 1));
 	set_menu_mark(main_menu.menu, " * ");
@@ -204,7 +191,7 @@ struct Menu main_menu_setup(WINDOW * menu_window)
 	return main_menu;
 }
 
-struct Form form_setup(WINDOW * form_window)
+struct Form form_setup(WINDOW *form_window)
 {
 	struct Form this_form;
 	this_form.field_count = 5;
@@ -270,7 +257,7 @@ void free_form_struct(struct Form form_struct)
 		free_field(form_struct.fields[i]);
 }
 
-void form_highlight_active(const FORM * form)
+void form_highlight_active(const FORM *form)
 {
 	for(int i = 0; i < form->maxfield; i++)
 	{
@@ -279,7 +266,7 @@ void form_highlight_active(const FORM * form)
 	set_field_back(current_field(form), A_REVERSE);
 }
 
-void update_field_text(WINDOW * window, FORM * form)
+void update_field_text(WINDOW *window, FORM *form)
 {
 	//FIELD * active_field = current_field(form);
 	int c = 0;
@@ -310,16 +297,16 @@ void update_field_text(WINDOW * window, FORM * form)
 	curs_set(0);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 /*	if (argc > 2)
 	{
-		long double sampleCount = string_to_long_double(argv[1]);
-		long double sampleFreq = string_to_long_double(argv[2]);
+		long double sampleCount = ASCII_string_to_double(argv[1]);
+		long double sampleFreq = ASCII_string_to_double(argv[2]);
 		// Tested 100 samples at 1MHz
 		generate_signal(sampleCount, sampleFreq);
 	}
-	else
+else
 	{
 		printf("Missing function arguments\n");
 	}*/
@@ -329,9 +316,9 @@ int main(int argc, char** argv)
 	noecho();	// User input is not echoed
 	curs_set(0);	// Hide cursor
 	
-	WINDOW * menu_window = newwin(MAIN_MENU_SIZE, MAIN_MENU_LOCATION);
-	WINDOW * output_window = newwin(OUTPUT_WINDOW_SIZE, OUTPUT_WINDOW_LOCATION);
-	WINDOW * popup_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
+	WINDOW *menu_window = newwin(MAIN_MENU_SIZE, MAIN_MENU_LOCATION);
+	WINDOW *output_window = newwin(OUTPUT_WINDOW_SIZE, OUTPUT_WINDOW_LOCATION);
+	WINDOW *popup_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
 		
 	box(menu_window, 0, 0);
 	box(output_window, 0, 0);
@@ -339,9 +326,9 @@ int main(int argc, char** argv)
 	
 	struct Menu main_menu = main_menu_setup(menu_window);
 
-	PANEL * menu_panel;
-	PANEL *	output_panel;
-	PANEL * popup_panel;
+	PANEL *menu_panel;
+	PANEL *output_panel;
+	PANEL *popup_panel;
 	menu_panel = new_panel(menu_window);
 	output_panel = new_panel(output_window);
 	popup_panel = new_panel(popup_window);
