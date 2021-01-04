@@ -1,5 +1,23 @@
-all: hello
+CC=gcc
+TARGET=test_signal_generator
+OBJDIR=build
+OBJS=$(addprefix $(OBJDIR)/, ASCII_parser.o test_signal_generator.o)
+CFLAGS=-Wall -Wextra -pedantic
+LDLIBS=-lm -lpanel -lmenu -lform -lncurses
 
-hello: test_signal_generator.c
-	gcc -Wall ASCII_parser.c test_signal_generator.c -o test_signal_generator -lm -lpanel -lmenu -lform -lncurses
+# Search path for .o files
+vpath %.o $(OBJDIR)
 
+$(TARGET) : $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+
+#$(OBJS): | $(OBJDIR)
+$(OBJDIR)/%.o : %.c %.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(OBJDIR) :
+	mkdir $(OBJDIR)
+
+.PHONY: clean
+clean :
+	-rm -f $(TARGET) $(OBJDIR)/*.o
