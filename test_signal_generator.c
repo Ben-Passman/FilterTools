@@ -215,7 +215,7 @@ struct Form form_setup(WINDOW *form_window)
 
 	for (int i = 0; i < this_form.field_count; i++)
 	{
-		field_opts_off(this_form.fields[i], O_AUTOSKIP);
+		field_opts_off(this_form.fields[i], O_AUTOSKIP | O_BLANK);
 	}
 	
 	set_field_buffer(this_form.fields[2], 0, "Option 1");
@@ -245,16 +245,22 @@ void free_menu_struct(struct Menu menu_struct)
 {
 	unpost_menu(menu_struct.menu);
 	free_menu(menu_struct.menu);
-	for(int i =0; i < menu_struct.item_count; i++)
+	for(int i =0; i < menu_struct.item_count + 1; i++)
+	{
 		free_item(menu_struct.items[i]);
+	}
+	free(menu_struct.items);
 }
 
 void free_form_struct(struct Form form_struct)
 {
 	unpost_form(form_struct.form);
 	free_form(form_struct.form);
-	for(int i = 0; i < form_struct.field_count; i++)
+	for(int i = 0; i < form_struct.field_count + 1; i++)
+	{
 		free_field(form_struct.fields[i]);
+	}
+	free(form_struct.fields);
 }
 
 void form_highlight_active(const FORM *form)
