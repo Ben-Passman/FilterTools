@@ -2,7 +2,7 @@ CC=gcc
 TARGET=test_signal_generator
 OBJDIR=build
 OBJS=$(addprefix $(OBJDIR)/, ASCII_parser.o test_signal_generator.o)
-CFLAGS=-Wall -Wextra -pedantic
+CFLAGS=-Wall -Wextra -pedantic -g -O0
 LDLIBS=-lm -lpanel -lmenu -lform -lncurses
 
 # Search path for .o files
