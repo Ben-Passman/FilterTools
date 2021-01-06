@@ -11,7 +11,7 @@ vpath %.o $(OBJDIR)
 $(TARGET) : $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
-#$(OBJS): | $(OBJDIR)
+$(OBJS): | $(OBJDIR)
 $(OBJDIR)/%.o : %.c %.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
