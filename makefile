@@ -1,19 +1,29 @@
-CC=gcc
-TARGET=test_signal_generator
-OBJDIR=build
-OBJS=$(addprefix $(OBJDIR)/, ASCII_parser.o test_signal_generator.o)
-CFLAGS=-Wall -Wextra -pedantic -g -O0
-LDLIBS=-lm -lpanel -lmenu -lform -lncurses
+SHELL	= /bin/sh
+CC	= gcc
+LINKER	= gcc
 
-# Search path for .o files
+TARGET	= test_signal_generator
+SRCDIR	= src
+INCLUDE	= include
+OBJDIR	= build
+
+OBJS	= $(addprefix $(OBJDIR)/, input_validation.o test_signal_generator.o)
+
+CFLAGS	= -g -O0 -Wall -Wextra -pedantic
+LDLIBS	= -lm -lpanel -lmenu -lform -lncurses
+
+# Search paths
 vpath %.o $(OBJDIR)
+vpath %.c $(SRCDIR)
+vpath %.h $(SRCDIR) $(INCLUDE)
 
+all : $(TARGET)
 $(TARGET) : $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(LINKER) -o $@ $^ $(LDLIBS) $(CFLAGS)
 
 $(OBJS): | $(OBJDIR)
 $(OBJDIR)/%.o : %.c %.h
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $< -o $@ $(CFLAGS)
 
 $(OBJDIR) :
 	mkdir $(OBJDIR)

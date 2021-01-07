@@ -1,14 +1,14 @@
 /************************************************************************************************
- * FilterTools/ASCII_parser.h
+ * FilterTools/input_validation.h
  *
  * Author	: Ben Passman
  * Created	: 27/12/2020
  *
- * Description	: Convert ASCII input into numerical values.
+ * Description	: Functions to validate form inputs.
  *
  * Revision History:
  * Date		Author		Rev	Notes
- * 27/12/2020	Ben P		1.0	File created. Added lookup table for SI unit conversion.
+ * 27/12/2020	Ben P		1.0	File created.
  *
  ************************************************************************************************ */
 

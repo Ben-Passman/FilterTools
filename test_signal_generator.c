@@ -14,7 +14,7 @@
  ************************************************************************************************ */
 
 #include "test_signal_generator.h"
-#include "ASCII_parser.h"
+#include "src/input_validation.h"
 
 #include <stdlib.h>
 #include <string.h>

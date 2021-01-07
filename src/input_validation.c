@@ -1,21 +1,19 @@
 /************************************************************************************************
- * FilterTools.ASCII_parser.c
+ * FilterTools/input_validation.c
  *
  * Author	: Ben Passman
  * Created	: 27/12/2020
  *
- * Description	: Converts ASCII text into numerical values with tolerance for small typos.
+ * Description	: Form input validation functions.
  *
  * Revision History:
  * Date		Author		Rev	Notes
- * 27/12/2020	Ben P	1.0	File created. Added functions to parse ASCII text to double.
- * 								Supports SI suffuxes and base 10 exponents.
+ * 27/12/2020	Ben P	1.0	File created.
  *
  ************************************************************************************************ */
 
-#include "ASCII_parser.h"
+#include "input_validation.h"
 #include <stdio.h>
-//#include <string.h>
 #include <math.h>
 #include <regex.h>
 
