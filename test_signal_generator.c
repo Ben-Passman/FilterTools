@@ -15,6 +15,7 @@
 
 #include "test_signal_generator.h"
 #include "src/form_handler.h"
+#include "src/menu_handler.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -24,12 +25,6 @@
 #include <menu.h>
 #include <form.h>
 #include <panel.h>
-
-struct Menu {
-	MENU *menu;
-	ITEM **items;
-	int item_count;
-};
 
 long double saw_wave(const long double t, const double freq, const double amplitude, const double phase, const double duty)
 {
@@ -145,41 +140,6 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 	fclose(fp);
 }
 
-struct Menu main_menu_setup(WINDOW *menu_window)
-{
-	struct Menu main_menu;
-	const char *main_menu_options[] = MAIN_MENU_OPTIONS;
-	main_menu.item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);
-
-	main_menu.items = (ITEM **) calloc(main_menu.item_count + 1, sizeof(ITEM *));
-
-	for(int i = 0; i < main_menu.item_count; ++i)
-	{
-		main_menu.items[i] = new_item(main_menu_options[i], "");
-	}
-	main_menu.items[main_menu.item_count] = (ITEM *)NULL;
-
-	main_menu.menu = new_menu((ITEM **) main_menu.items);
-	set_menu_win(main_menu.menu, menu_window);
-	set_menu_sub(main_menu.menu, derwin(menu_window, 0, 0, 1, 1));
-	set_menu_mark(main_menu.menu, " * ");
-	
-	post_menu(main_menu.menu);
-	
-	return main_menu;
-}
-
-void free_menu_struct(struct Menu menu_struct)
-{
-	unpost_menu(menu_struct.menu);
-	free_menu(menu_struct.menu);
-	for(int i =0; i < menu_struct.item_count + 1; i++)
-	{
-		free_item(menu_struct.items[i]);
-	}
-	free(menu_struct.items);
-}
-
 int main(int argc, char **argv)
 {
 /*	if (argc > 2)
@@ -215,10 +175,8 @@ else
 	menu_panel = new_panel(menu_window);
 	output_panel = new_panel(output_window);
 	popup_panel = new_panel(popup_window);
-show_panel(menu_panel);
-show_panel(output_panel);
-show_panel(popup_panel);
-	//hide_panel(popup_panel);
+
+	hide_panel(popup_panel);
 	update_panels();
 
 	struct Form file_form = form_setup(popup_window);
@@ -227,51 +185,18 @@ show_panel(popup_panel);
 
 	// MENU INTERFACE
 	int c = 0;
-/*	keypad(menu_window, TRUE);
+	keypad(menu_window, TRUE);
 	while((c = wgetch(menu_window)) != 'q')
 	{
-		switch(c)
-		{
-			case KEY_DOWN :
-				menu_driver(main_menu.menu, REQ_DOWN_ITEM);
-				break;
-			case KEY_UP :
-				menu_driver(main_menu.menu, REQ_UP_ITEM);
-				break;
-			case '\n' :
-				if (panel_hidden(popup_panel))
-				{
-					show_panel(popup_panel);
-					hide_panel(menu_panel);
-					hide_panel(output_panel);
-					bottom_panel(menu_panel);
-				}
-				else
-				{
-					hide_panel(popup_panel);
-					show_panel(menu_panel);
-					show_panel(output_panel);
-				}
-				break;
-		}
-		
-		if (panel_hidden(popup_panel))
-		{
-			// Debug
-			mvwprintw(output_window, 1, 2, "Sampling frequency: 555 kHz");
-			mvwprintw(output_window, 2, 2, "Sample count:       1000");
-			mvwprintw(output_window, 4, 2, "Shape: Amplitude: Phase: Freq: Duty: Mode:");
-			mvwprintw(output_window, 5, 2, "Main menu size: %d", main_menu.item_count);
-			mvwprintw(output_window, 6, 2, "Selected option: %d", item_index(current_item(main_menu.menu)));
-		}
-
+        main_menu_driver(main_menu.menu, c);
+               
 		update_panels();
-		doupdate();
-	}*/
+        doupdate();
+	}
 	
 	// FORM INTERFACE
-	//curs_set(1);
-	form_highlight_active(file_form.form);
+
+/*	form_highlight_active(file_form.form);
 	keypad(popup_window, TRUE);
 	
 	while((c = wgetch(popup_window)) != 'q')
@@ -281,7 +206,7 @@ show_panel(popup_panel);
         int index = field_index(current_field(file_form.form));
         mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
         mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
-	}
+	} */
 
 	free_menu_struct(main_menu);
 	free_form_struct(file_form);

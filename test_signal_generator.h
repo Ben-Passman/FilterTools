@@ -14,16 +14,6 @@
 
 #define MAIN_MENU_SIZE 10, 50
 #define MAIN_MENU_LOCATION 2, (COLS - 50) / 2
-#define MAIN_MENU_OPTIONS \
-{ \
-	"Edit settings", \
-	"Add new wave", \
-	"Modify existing wave", \
-	"Delete wave", \
-	"Load wave set", \
-	"Save wave set", \
-	"Export combined waveform" \
-}
 
 #define OUTPUT_WINDOW_SIZE 20, 50
 #define OUTPUT_WINDOW_LOCATION 13, (COLS - 50) / 2
