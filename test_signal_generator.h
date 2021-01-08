@@ -37,11 +37,3 @@ const char * WAVE_LIST[] = {
 	"TRIANGLE",
 	"SQUARE"
 };
-
-enum field_type {
-	PATH_FIELD,
-	NUMBER_FIELD,
-	LIST_FIELD,
-	OK_FIELD,
-	CANCEL_FIELD
-};

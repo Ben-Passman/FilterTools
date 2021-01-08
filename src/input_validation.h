@@ -1,3 +1,6 @@
+#ifndef INPUT_VALIDATION
+#define INPUT_VALIDATION
+
 /************************************************************************************************
  * FilterTools/input_validation.h
  *
@@ -17,3 +20,5 @@ int format_number_string(const char *string, const char *expression, char *resul
 double ASCII_string_to_double(const char *string);
 void print_scientific(double number);
 void print_SI(double number);
+
+#endif
