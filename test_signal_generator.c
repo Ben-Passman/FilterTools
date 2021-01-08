@@ -29,6 +29,18 @@
 #include <form.h>
 #include <panel.h>
 
+struct FormTemplate wave_controls[] = {
+	{ LABEL_FIELD, 0, 0, 2, 4, "Path:" },
+	{ PATH_FIELD, 1, 20, 0, 0, "" },
+	{ LABEL_FIELD, 0, 0, 4, 4, "Number:" },
+	{ NUMBER_FIELD, 1, 20, 2, 0, "" },
+	{ LABEL_FIELD, 0, 0, 6, 4, "List:" },
+	{ LIST_FIELD, 1, 20, 4, 0, "" },
+	{ LABEL_FIELD, 0, 0, 8, 4, "Button:" },
+	{ OK_FIELD, 1, 8, 6, 0, "   Ok   " },
+	{ CANCEL_FIELD, 1, 8, 6, 10, " Cancel " }
+};
+
 int main(int argc, char **argv)
 {
 	initscr();	// Init screen, setup memory and clear screen
@@ -53,37 +65,37 @@ int main(int argc, char **argv)
 	output_panel = new_panel(output_window);
 	popup_panel = new_panel(popup_window);
 
-	hide_panel(popup_panel);
-	update_panels();
+//	hide_panel(popup_panel);
 
-	struct Form file_form = form_setup(popup_window);
+	struct Form file_form = form_setup(popup_window, &wave_controls[0], sizeof wave_controls / sizeof wave_controls[0] );
+	update_panels();
 	
 	doupdate();
 
 	// MENU INTERFACE
 	int c = 0;
-	keypad(menu_window, TRUE);
-	while((c = wgetch(menu_window)) != 'q')
-	{
-        main_menu_driver(main_menu.menu, c);
+//	keypad(menu_window, TRUE);
+//	while((c = wgetch(menu_window)) != 'q')
+//	{
+//	main_menu_driver(main_menu.menu, c);
                
-		update_panels();
-        doupdate();
-	}
+//		update_panels();
+//        doupdate();
+//	}
 	
 	// FORM INTERFACE
 
-//	form_highlight_active(file_form.form);
-//	keypad(popup_window, TRUE);
+	form_highlight_active(file_form.form);
+	keypad(popup_window, TRUE);
 	
-//	while((c = wgetch(popup_window)) != 'q')
-//	{
-//        form_menu_driver(popup_window, file_form.form, c);
+	while((c = wgetch(popup_window)) != 'q')
+	{
+        form_menu_driver(popup_window, &file_form, c);
         
-//        int index = field_index(current_field(file_form.form));
-//        mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
-//        mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
-//	}
+        int index = field_index(current_field(file_form.form));
+        mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
+        mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
+	}
 
 	free_menu_struct(main_menu);
 	free_form_struct(file_form);

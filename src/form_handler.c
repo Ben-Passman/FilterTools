@@ -20,14 +20,6 @@
 
 #define NUMERIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
 
-enum field_type {
-	PATH_FIELD,
-	NUMBER_FIELD,
-	LIST_FIELD,
-	OK_FIELD,
-	CANCEL_FIELD
-};
-
 void validate_numeric(FORM *form)
 {
 	form_driver(form, REQ_VALIDATION); // Force validation to update buffer contents
@@ -42,37 +34,60 @@ void validate_numeric(FORM *form)
 	free(temp);
 }
 
-struct Form form_setup(WINDOW *form_window)
+struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size)
 {
 	struct Form this_form;
-	this_form.field_count = 5;
-
-	this_form.fields = (FIELD **)calloc(this_form.field_count + 1, sizeof(FIELD *));
-
-	this_form.fields[0] = new_field(1, 20, 0, 0, 0, 0);
-	set_field_back(this_form.fields[0], A_UNDERLINE);
-	field_opts_off(this_form.fields[0], O_STATIC);
-	set_max_field(this_form.fields[0], 1024);
-
-	this_form.fields[1] = dup_field(this_form.fields[0], 2, 0);
-//	set_field_type(this_form.fields[1], TYPE_NUMERIC);
-
-	this_form.fields[2] = new_field(1, 20, 4, 0, 0, 0);
-
-	this_form.fields[3] = new_field(1, 8, 6, 0, 0, 0);
+	this_form.field_count = size;
 	
-	this_form.fields[4] = dup_field(this_form.fields[3], 8, 0);
-	this_form.fields[5] = NULL;
-
-	for (int i = 0; i < this_form.field_count; i++)
+	for (int i = 0; i < size; i++)
 	{
-		field_opts_off(this_form.fields[i], O_AUTOSKIP | O_BLANK);
+		struct FormTemplate *f = (field_list + i);
+		if (f->type == LABEL_FIELD)
+		{
+			mvwprintw(form_window, f->row, f->column, f->text);
+			this_form.field_count--;
+		}
 	}
 	
-	set_field_buffer(this_form.fields[2], 0, "Option 1");
-	set_field_buffer(this_form.fields[3], 0, "   Ok   ");
-	set_field_buffer(this_form.fields[4], 0, " Cancel ");
+	this_form.fields = (FIELD **) calloc(this_form.field_count + 1, sizeof(FIELD *));
+	this_form.field_types = (enum FieldType *) calloc(this_form.field_count + 1, sizeof(enum FieldType));
 
+	int field_index = 0;
+	for (int i = 0; i < size; i++)
+	{
+		struct FormTemplate *f = (field_list + i);
+		*(this_form.field_types + field_index) = f->type;
+		switch (f->type)
+		{
+			case PATH_FIELD :
+			case NUMBER_FIELD :
+				this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
+				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK | O_STATIC);
+				set_field_buffer(this_form.fields[field_index], 0, f->text);
+				set_field_back(this_form.fields[field_index], A_UNDERLINE);
+				set_max_field(this_form.fields[field_index], 1024);	
+				field_index++;
+				break;
+			case LIST_FIELD :
+				this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
+				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
+				set_field_buffer(this_form.fields[field_index], 0, f->text);
+				field_index++;
+				break;
+			case OK_FIELD :
+			case CANCEL_FIELD :
+				this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
+				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
+				set_field_buffer(this_form.fields[field_index], 0, f->text);
+				field_index++;
+				break;
+			case LABEL_FIELD :
+			default :
+				break;			
+		}
+	}
+	this_form.fields[field_index] = NULL;
+	
 	int rows = 8;
 	int cols = 28;
 	this_form.form = new_form(this_form.fields);
@@ -81,13 +96,6 @@ struct Form form_setup(WINDOW *form_window)
 	set_form_sub(this_form.form, derwin(form_window, rows, cols, 2, 15));
 	form_opts_off(this_form.form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
 	post_form(this_form.form);
-
-	mvwprintw(form_window, 2, 4, "Path:"); // Highlight on select, cursor on active
-	mvwprintw(form_window, 4, 4, "Number:"); // Highlight on select, cursor on active
-	mvwprintw(form_window, 6, 4, "List:"); // Highlight on select
-	mvwprintw(form_window, 8, 4, "Button:"); // Dim, highlight on select
-
-// label, type, position
 
 	return this_form;
 }
@@ -132,36 +140,36 @@ void update_field_text(WINDOW *window, FORM *form)
 	curs_set(0);
 }
 
-void form_menu_driver(WINDOW* window, FORM *form, int c)
+void form_menu_driver(WINDOW* window, struct Form *form, int c)
 {
 	int index;
 
 	switch(c)
 	{
 		case KEY_DOWN :
-			form_driver(form, REQ_NEXT_FIELD);
-			form_highlight_active(form);
+			form_driver(form->form, REQ_NEXT_FIELD);
+			form_highlight_active(form->form);
 			break;
 		case KEY_UP :
-			form_driver(form, REQ_PREV_FIELD);
-			form_highlight_active(form);
+			form_driver(form->form, REQ_PREV_FIELD);
+			form_highlight_active(form->form);
 			break;
 		case '\n' :
-            index = field_index(current_field(form));
+        		index = *(form->field_types + field_index(current_field(form->form)));
 			switch(index)
 			{
 				case PATH_FIELD :
-					form_driver(form, REQ_END_LINE);
-                    update_field_text(window, form);
+					form_driver(form->form, REQ_END_LINE);
+                			update_field_text(window, form->form);
 					break;
-                case NUMBER_FIELD :
-					form_driver(form, REQ_END_LINE);
-                    update_field_text(window, form);
-                    validate_numeric(form);
+        		        case NUMBER_FIELD :
+					form_driver(form->form, REQ_END_LINE);
+                			update_field_text(window, form->form);
+                			validate_numeric(form->form);
 					break;
 				case LIST_FIELD :
-                    form_driver(form, REQ_END_LINE);
-					update_field_text(window, form);
+                			form_driver(form->form, REQ_END_LINE);
+					update_field_text(window, form->form);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
@@ -183,4 +191,5 @@ void free_form_struct(struct Form form_struct)
 		free_field(form_struct.fields[i]);
 	}
 	free(form_struct.fields);
+	free(form_struct.field_types);
 }

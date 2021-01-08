@@ -17,17 +17,29 @@
 
 #include <form.h>
 
+enum FieldType { LABEL_FIELD, PATH_FIELD, NUMBER_FIELD, LIST_FIELD, OK_FIELD, CANCEL_FIELD };
+
 struct Form {
 	FORM *form;
 	FIELD **fields;
+    enum FieldType *field_types;
 	int field_count;
 };
 
+struct FormTemplate {
+	enum FieldType type;
+	int row_size;
+	int column_size;
+	int row;
+	int column;
+	char * text;
+};
+
 void validate_numeric(FORM *form);
-struct Form form_setup(WINDOW *form_window);
+struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size);
 void form_highlight_active(FORM *form);
 void update_field_text(WINDOW *window, FORM *form);
-void form_menu_driver(WINDOW *window, FORM *form, int c);
+void form_menu_driver(WINDOW *window, struct Form *form, int c);
 void free_form_struct(struct Form form_struct);
 
 #endif
