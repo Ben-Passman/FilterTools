@@ -75,35 +75,33 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 	{
 		struct FormTemplate *f = (field_list + i);
 		*(this_form.field_types + field_index) = f->type;
-		switch (f->type)
+		if (f->type != LABEL_FIELD)
 		{
-			case PATH_FIELD :
-			case NUMBER_FIELD :
-				this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
-				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK | O_STATIC);
-				set_field_buffer(this_form.fields[field_index], 0, f->text);
-				set_field_back(this_form.fields[field_index], A_UNDERLINE);
-				set_max_field(this_form.fields[field_index], 1024);	
-				field_index++;
-				break;
-			case LIST_FIELD :
-                this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
-				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
-				set_field_buffer(this_form.fields[field_index], 0, f->text);
-                set_field_type(this_form.fields[field_index], FIELD_CUSTOM);
-				field_index++;
-				break;
-			case OK_FIELD :
-			case CANCEL_FIELD :
-				this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
-				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
-				set_field_buffer(this_form.fields[field_index], 0, f->text);
-				field_index++;
-				break;
-			case LABEL_FIELD :
-			default :
-				break;			
+ 			this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
+			field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
+			set_field_buffer(this_form.fields[field_index], 0, f->text);
+			
+			switch (f->type)
+			{
+				case NUMBER_FIELD :
+				case PATH_FIELD :
+					field_opts_off(this_form.fields[field_index], O_STATIC);
+					set_field_back(this_form.fields[field_index], A_UNDERLINE);
+					set_max_field(this_form.fields[field_index], 1024);	
+					break;
+				case LIST_FIELD :
+					set_field_type(this_form.fields[field_index], FIELD_CUSTOM);
+					break;
+				case OK_FIELD :
+				case CANCEL_FIELD :
+					break;
+				default :
+					break;			
+			}
+			
+			field_index++;
 		}
+
 	}
 	this_form.fields[field_index] = NULL;
 	
