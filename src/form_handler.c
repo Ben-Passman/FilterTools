@@ -22,10 +22,17 @@
 
 static FIELDTYPE *FIELD_CUSTOM = NULL;
 
-static bool custom_field_validation(FIELD *field, const void *p)
+static bool is_valid_number_field(FIELD *field, const void *p)
 {
-    set_field_buffer(field, 0, "Failed");
-    return true;
+	char * contents = field_buffer(field, 0);
+	char * temp = (char *) calloc(strlen(contents), sizeof(char));
+
+	strip_whitespace(contents, temp);
+	format_number_string(temp, NUMERIC_FIELD_REGEX, temp);
+	set_field_buffer(field, 0, temp);
+
+	free(temp);
+	return true;
 }
 
 static bool custom_char_validation(int c, const void *p)
@@ -35,21 +42,8 @@ static bool custom_char_validation(int c, const void *p)
 
 void init_form_handler(void)
 {
-    FIELD_CUSTOM = new_fieldtype(&custom_field_validation, &custom_char_validation);
-}
-
-void validate_numeric(FORM *form)
-{
-	form_driver(form, REQ_VALIDATION); // Force validation to update buffer contents
-	
-	char *buffer_contents = field_buffer(current_field(form), 0);
-	char *temp = (char *) calloc(strlen(buffer_contents), sizeof(char));				
-	
-	strip_whitespace(buffer_contents, temp);
-	format_number_string(temp, NUMERIC_FIELD_REGEX, temp);
-	set_field_buffer(current_field(form), 0, temp);
-	
-	free(temp);
+    //FIELD_CUSTOM = new_fieldtype(&is_valid_number_field, &custom_char_validation);
+    FIELD_CUSTOM = new_fieldtype(&is_valid_number_field, NULL);
 }
 
 struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size)
@@ -84,13 +78,13 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 			switch (f->type)
 			{
 				case NUMBER_FIELD :
+					set_field_type(this_form.fields[field_index], FIELD_CUSTOM);
 				case PATH_FIELD :
 					field_opts_off(this_form.fields[field_index], O_STATIC);
 					set_field_back(this_form.fields[field_index], A_UNDERLINE);
 					set_max_field(this_form.fields[field_index], 1024);	
 					break;
 				case LIST_FIELD :
-					set_field_type(this_form.fields[field_index], FIELD_CUSTOM);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
@@ -154,39 +148,39 @@ void update_field_text(WINDOW *window, FORM *form)
 				break;		
 		}
 	}
+	form_driver(form, REQ_VALIDATION);
 	curs_set(0);
 }
 
-void form_menu_driver(WINDOW* window, struct Form *form, int c)
+void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 {
 	int index;
 
 	switch(c)
 	{
 		case KEY_DOWN :
-			form_driver(form->form, REQ_NEXT_FIELD);
-			form_highlight_active(form->form);
+			form_driver(menu->form, REQ_NEXT_FIELD);
+			form_highlight_active(menu->form);
 			break;
 		case KEY_UP :
-			form_driver(form->form, REQ_PREV_FIELD);
-			form_highlight_active(form->form);
+			form_driver(menu->form, REQ_PREV_FIELD);
+			form_highlight_active(menu->form);
 			break;
 		case '\n' :
-        		index = *(form->field_types + field_index(current_field(form->form)));
+        		index = *(menu->field_types + field_index(current_field(menu->form)));
 			switch(index)
 			{
 				case PATH_FIELD :
-					form_driver(form->form, REQ_END_LINE);
-                			update_field_text(window, form->form);
+					form_driver(menu->form, REQ_END_LINE);
+                			update_field_text(window, menu->form);
 					break;
         		        case NUMBER_FIELD :
-					form_driver(form->form, REQ_END_LINE);
-                			update_field_text(window, form->form);
-                			validate_numeric(form->form);
+					form_driver(menu->form, REQ_END_LINE);
+                			update_field_text(window, menu->form);
 					break;
 				case LIST_FIELD :
-                			form_driver(form->form, REQ_END_LINE);
-					update_field_text(window, form->form);
+                			form_driver(menu->form, REQ_END_LINE);
+					update_field_text(window, menu->form);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
