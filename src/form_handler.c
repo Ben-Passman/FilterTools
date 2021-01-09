@@ -18,9 +18,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NUMERIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
+#define SCIENTIFIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
 
-static FIELDTYPE *FIELD_CUSTOM = NULL;
+struct Dropdown
+{
+	int selected_item_index;
+	const char **item_list;
+	const int size;
+};
+
+static FIELDTYPE *FIELD_SCIENTIFIC = NULL;
+static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
+static struct Dropdown dropdown_lists[] = { { 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] } }; 
 
 static bool is_valid_number_field(FIELD *field, const void *p)
 {
@@ -28,7 +37,7 @@ static bool is_valid_number_field(FIELD *field, const void *p)
 	char * temp = (char *) calloc(strlen(contents), sizeof(char));
 
 	strip_whitespace(contents, temp);
-	format_number_string(temp, NUMERIC_FIELD_REGEX, temp);
+	format_number_string(temp, SCIENTIFIC_FIELD_REGEX, temp);
 	set_field_buffer(field, 0, temp);
 
 	free(temp);
@@ -42,8 +51,7 @@ static bool custom_char_validation(int c, const void *p)
 
 void init_form_handler(void)
 {
-    //FIELD_CUSTOM = new_fieldtype(&is_valid_number_field, &custom_char_validation);
-    FIELD_CUSTOM = new_fieldtype(&is_valid_number_field, NULL);
+    FIELD_SCIENTIFIC = new_fieldtype(&is_valid_number_field, NULL);
 }
 
 struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size)
@@ -78,13 +86,14 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 			switch (f->type)
 			{
 				case NUMBER_FIELD :
-					set_field_type(this_form.fields[field_index], FIELD_CUSTOM);
+					set_field_type(this_form.fields[field_index], FIELD_SCIENTIFIC);
 				case PATH_FIELD :
 					field_opts_off(this_form.fields[field_index], O_STATIC);
 					set_field_back(this_form.fields[field_index], A_UNDERLINE);
 					set_max_field(this_form.fields[field_index], 1024);	
 					break;
 				case LIST_FIELD :
+					set_field_userptr(this_form.fields[field_index], (void *) &dropdown_lists[0]);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
@@ -158,6 +167,33 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 
 	switch(c)
 	{
+		case KEY_LEFT :
+			index = *(menu->field_types + field_index(current_field(menu->form)));
+			if (index == LIST_FIELD)
+			{
+				struct Dropdown *list_contents = (struct Dropdown *) field_userptr(current_field(menu->form));
+				if (list_contents->selected_item_index < 1)
+				{
+					list_contents->selected_item_index = list_contents->size;
+				}
+				list_contents->selected_item_index--;
+				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
+			}
+			break;
+		case KEY_RIGHT :
+			index = *(menu->field_types + field_index(current_field(menu->form)));
+			if (index == LIST_FIELD)
+			{
+				struct Dropdown *list_contents = (struct Dropdown *) field_userptr(current_field(menu->form));
+				list_contents->selected_item_index++;
+				if (list_contents->selected_item_index >= list_contents->size)
+				{
+					list_contents->selected_item_index = 0;
+				}
+				char *temp = (char *) &list_contents->selected_item_index;
+				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
+			}
+			break;
 		case KEY_DOWN :
 			form_driver(menu->form, REQ_NEXT_FIELD);
 			form_highlight_active(menu->form);
@@ -179,8 +215,6 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
                 			update_field_text(window, menu->form);
 					break;
 				case LIST_FIELD :
-                			form_driver(menu->form, REQ_END_LINE);
-					update_field_text(window, menu->form);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
@@ -203,5 +237,5 @@ void free_form_struct(struct Form form_struct)
 	}
 	free(form_struct.fields);
 	free(form_struct.field_types);
-    free_fieldtype(FIELD_CUSTOM);
+    free_fieldtype(FIELD_SCIENTIFIC);
 }
