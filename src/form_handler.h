@@ -36,6 +36,7 @@ struct FormTemplate {
 };
 
 void validate_numeric(FORM *form);
+void init_form_handler(void);
 struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size);
 void form_highlight_active(FORM *form);
 void update_field_text(WINDOW *window, FORM *form);

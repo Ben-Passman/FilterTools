@@ -41,7 +41,7 @@ struct FormTemplate wave_controls[] = {
 	{ CANCEL_FIELD, 1, 8, 6, 10, " Cancel " }
 };
 
-int main(int argc, char **argv)
+int main(void)
 {
 	initscr();	// Init screen, setup memory and clear screen
 	cbreak();	// Unbuffered input, enables Ctrl + C to exit ncurses (default)
@@ -67,6 +67,7 @@ int main(int argc, char **argv)
 
 //	hide_panel(popup_panel);
 
+	init_form_handler();
 	struct Form file_form = form_setup(popup_window, &wave_controls[0], sizeof wave_controls / sizeof wave_controls[0] );
 	update_panels();
 	
@@ -92,7 +93,6 @@ int main(int argc, char **argv)
 	{
         form_menu_driver(popup_window, &file_form, c);
         
-        int index = field_index(current_field(file_form.form));
         mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
         mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
 	}

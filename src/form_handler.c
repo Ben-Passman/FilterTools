@@ -20,6 +20,24 @@
 
 #define NUMERIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
 
+static FIELDTYPE *FIELD_CUSTOM = NULL;
+
+static bool custom_field_validation(FIELD *field, const void *p)
+{
+    set_field_buffer(field, 0, "Failed");
+    return true;
+}
+
+static bool custom_char_validation(int c, const void *p)
+{
+    return ((c > '2') && (c < '9')) ? true : false;
+}
+
+void init_form_handler(void)
+{
+    FIELD_CUSTOM = new_fieldtype(&custom_field_validation, &custom_char_validation);
+}
+
 void validate_numeric(FORM *form)
 {
 	form_driver(form, REQ_VALIDATION); // Force validation to update buffer contents
@@ -69,9 +87,10 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 				field_index++;
 				break;
 			case LIST_FIELD :
-				this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
+                this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
 				field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
 				set_field_buffer(this_form.fields[field_index], 0, f->text);
+                set_field_type(this_form.fields[field_index], FIELD_CUSTOM);
 				field_index++;
 				break;
 			case OK_FIELD :
@@ -183,7 +202,7 @@ void form_menu_driver(WINDOW* window, struct Form *form, int c)
 }
 
 void free_form_struct(struct Form form_struct)
-{
+{    
 	unpost_form(form_struct.form);
 	free_form(form_struct.form);
 	for(int i = 0; i < form_struct.field_count + 1; i++)
@@ -192,4 +211,5 @@ void free_form_struct(struct Form form_struct)
 	}
 	free(form_struct.fields);
 	free(form_struct.field_types);
+    free_fieldtype(FIELD_CUSTOM);
 }
