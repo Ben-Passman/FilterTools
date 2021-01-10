@@ -28,6 +28,8 @@ struct Dropdown
 };
 
 static FIELDTYPE *FIELD_SCIENTIFIC = NULL;
+static FIELDTYPE *FIELD_INDEX = NULL;
+
 static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
 static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "Convolve", "AM", "FM" };
 static struct Dropdown dropdown_lists[] = { 
@@ -56,6 +58,7 @@ static bool is_integer_char(int c, const void *p)
 void init_form_handler(void)
 {
     FIELD_SCIENTIFIC = new_fieldtype(&is_valid_number_field, NULL);
+    FIELD_INDEX = new_fieldtype(NULL, &is_integer_char);
 }
 
 struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size)
@@ -101,6 +104,9 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 					list_index = (int) (*f->text - '0');
 					set_field_userptr(this_form.fields[field_index], (void *) &dropdown_lists[list_index]);
 					set_field_buffer(this_form.fields[field_index], 0, *dropdown_lists[list_index].item_list);
+					break;
+				case INDEX_FIELD :
+					set_field_type(this_form.fields[field_index], FIELD_INDEX);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
@@ -228,6 +234,10 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 					form_driver(menu->form, REQ_END_LINE);
                 			update_field_text(window, menu->form);
 					break;
+				case INDEX_FIELD :
+					form_driver(menu->form, REQ_END_LINE);
+					update_field_text(window, menu->form);
+					break;
 				case LIST_FIELD :
 					break;
 				case OK_FIELD :
@@ -252,4 +262,5 @@ void free_form_struct(struct Form form_struct)
 	free(form_struct.fields);
 	free(form_struct.field_types);
 	free_fieldtype(FIELD_SCIENTIFIC);
+	free_fieldtype(FIELD_INDEX);
 }

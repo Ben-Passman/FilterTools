@@ -53,7 +53,7 @@ struct FormTemplate wave_settings[] = {
 	{ LABEL_FIELD, 0, 0, 12, 4, "Mode:" },
 	{ LIST_FIELD, 1, 20, 10, 0, "1" },
 	{ LABEL_FIELD, 0, 0, 14, 4, "Index:" },
-	{ NUMBER_FIELD, 1, 20, 12, 0, "" },
+	{ INDEX_FIELD, 1, 20, 12, 0, "" },
 	
 
 	{ OK_FIELD, 1, 8, 14, 0, "   Ok   " },
@@ -100,10 +100,10 @@ int main(void)
 
 	init_form_handler();
 //	struct Form settings_form = form_setup(popup_window, &main_settings[0], sizeof main_settings / sizeof main_settings[0]);
-//	struct Form wave_form = form_setup(popup_window, &wave_settings[0], sizeof wave_settings / sizeof wave_settings[0]);
+	struct Form wave_form = form_setup(popup_window, &wave_settings[0], sizeof wave_settings / sizeof wave_settings[0]);
 //	struct Form file_form = form_setup(popup_window, &file_settings[0], sizeof file_settings / sizeof file_settings[0]);
-	struct Form alert_form = form_setup(popup_window, &alert_settings[0], sizeof alert_settings / sizeof alert_settings[0]);
-	struct Form *active_form = &alert_form;
+//	struct Form alert_form = form_setup(popup_window, &alert_settings[0], sizeof alert_settings / sizeof alert_settings[0]);
+	struct Form *active_form = &wave_form;
 
 	update_panels();
 	doupdate();
@@ -134,9 +134,9 @@ int main(void)
 
 	free_menu_struct(main_menu);
 //	free_form_struct(settings_form);
-//	free_form_struct(wave_form);
+	free_form_struct(wave_form);
 //	free_form_struct(file_form);
-	free_form_struct(alert_form);
+//	free_form_struct(alert_form);
 	endwin();
 	
     return 1;
