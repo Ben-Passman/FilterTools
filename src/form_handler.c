@@ -29,7 +29,11 @@ struct Dropdown
 
 static FIELDTYPE *FIELD_SCIENTIFIC = NULL;
 static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
-static struct Dropdown dropdown_lists[] = { { 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] } }; 
+static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "Convolve", "AM", "FM" };
+static struct Dropdown dropdown_lists[] = { 
+	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
+	{ 0, &modes[0], sizeof modes / sizeof modes[0] }
+}; 
 
 static bool is_valid_number_field(FIELD *field, const void *p)
 {
@@ -44,9 +48,9 @@ static bool is_valid_number_field(FIELD *field, const void *p)
 	return true;
 }
 
-static bool custom_char_validation(int c, const void *p)
+static bool is_integer_char(int c, const void *p)
 {
-    return ((c > '2') && (c < '9')) ? true : false;
+    return ((c >= '0') && (c <= '9')) ? true : false;
 }
 
 void init_form_handler(void)
@@ -73,6 +77,7 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 	this_form.field_types = (enum FieldType *) calloc(this_form.field_count + 1, sizeof(enum FieldType));
 
 	int field_index = 0;
+	int list_index;
 	for (int i = 0; i < size; i++)
 	{
 		struct FormTemplate *f = (field_list + i);
@@ -93,7 +98,9 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 					set_max_field(this_form.fields[field_index], 1024);	
 					break;
 				case LIST_FIELD :
-					set_field_userptr(this_form.fields[field_index], (void *) &dropdown_lists[0]);
+					list_index = (int) (*f->text - '0');
+					set_field_userptr(this_form.fields[field_index], (void *) &dropdown_lists[list_index]);
+					set_field_buffer(this_form.fields[field_index], 0, *dropdown_lists[list_index].item_list);
 					break;
 				case OK_FIELD :
 				case CANCEL_FIELD :
@@ -101,10 +108,8 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 				default :
 					break;			
 			}
-			
 			field_index++;
 		}
-
 	}
 	this_form.fields[field_index] = NULL;
 	
@@ -115,7 +120,7 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 	set_form_win(this_form.form, form_window);
 	set_form_sub(this_form.form, derwin(form_window, rows, cols, 2, 15));
 	form_opts_off(this_form.form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
-	post_form(this_form.form);
+//	post_form(this_form.form);
 
 	return this_form;
 }
@@ -131,7 +136,6 @@ void form_highlight_active(FORM *form)
 
 void update_field_text(WINDOW *window, FORM *form)
 {
-	//FIELD * active_field = current_field(form);
 	int c = 0;
 	curs_set(1);
 	
@@ -179,6 +183,11 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 				list_contents->selected_item_index--;
 				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
 			}
+			else if (index == CANCEL_FIELD)
+			{
+				form_driver(menu->form, REQ_PREV_FIELD);
+				form_highlight_active(menu->form);
+			}
 			break;
 		case KEY_RIGHT :
 			index = *(menu->field_types + field_index(current_field(menu->form)));
@@ -192,6 +201,11 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 				}
 				char *temp = (char *) &list_contents->selected_item_index;
 				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
+			}
+			else if (index == OK_FIELD)
+			{
+				form_driver(menu->form, REQ_NEXT_FIELD);
+				form_highlight_active(menu->form);
 			}
 			break;
 		case KEY_DOWN :
@@ -237,5 +251,5 @@ void free_form_struct(struct Form form_struct)
 	}
 	free(form_struct.fields);
 	free(form_struct.field_types);
-    free_fieldtype(FIELD_SCIENTIFIC);
+	free_fieldtype(FIELD_SCIENTIFIC);
 }

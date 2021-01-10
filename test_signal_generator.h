@@ -20,10 +20,3 @@
 
 #define POPUP_WINDOW_SIZE 20, 60
 #define POPUP_WINDOW_LOCATION 10, (COLS - 60) / 2
-
-const char * WAVE_LIST[] = {
-	"SINE",
-	"SAWTOOTH",
-	"TRIANGLE",
-	"SQUARE"
-};
