@@ -31,7 +31,7 @@ static FIELDTYPE *FIELD_SCIENTIFIC = NULL;
 static FIELDTYPE *FIELD_INDEX = NULL;
 
 static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
-static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "Convolve", "AM", "FM" };
+static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "AM", "FM" };
 static struct Dropdown dropdown_lists[] = { 
 	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
 	{ 0, &modes[0], sizeof modes / sizeof modes[0] }
@@ -205,7 +205,6 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 				{
 					list_contents->selected_item_index = 0;
 				}
-				char *temp = (char *) &list_contents->selected_item_index;
 				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
 			}
 			else if (index == OK_FIELD)

@@ -72,6 +72,29 @@ struct FormTemplate alert_settings[] = {
 	{ CANCEL_FIELD, 1, 8, 0, 10, " Cancel " }
 };
 
+void print_waves(WINDOW *window, struct WaveList *wlist)
+{
+	struct WaveForm *wave = wlist->first;
+	int row = 2;
+
+	while(wave != NULL)
+	{
+		if (wave == wlist->selected)
+		{
+			wattron(window, A_REVERSE);
+		}
+		else
+		{
+			wattroff(window, A_REVERSE);
+		}
+		mvwprintw(window, row, 2, "Testing...");
+
+		wave = wave->next;
+		row++;
+	}
+	wrefresh(window);
+}
+
 int main(void)
 {
 	initscr();	// Init screen, setup memory and clear screen
@@ -96,7 +119,7 @@ int main(void)
 	output_panel = new_panel(output_window);
 	popup_panel = new_panel(popup_window);
 
-//	hide_panel(popup_panel);
+	hide_panel(popup_panel);
 
 	init_form_handler();
 //	struct Form settings_form = form_setup(popup_window, &main_settings[0], sizeof main_settings / sizeof main_settings[0]);
@@ -108,18 +131,30 @@ int main(void)
 	update_panels();
 	doupdate();
 
+	struct WaveList waves = { NULL, NULL };
+	add_wave(&waves);
+	add_wave(&waves);
+	add_wave(&waves);
+	add_wave(&waves);
+	waves.selected = waves.selected->previous;
+	print_waves(output_window, &waves);
+	delete_wave(&waves);
+	delete_wave(&waves);
+	delete_wave(&waves);
+	delete_wave(&waves);
+
 	// MENU INTERFACE
 	int c = 0;
-//	keypad(menu_window, TRUE);
-//	while((c = wgetch(menu_window)) != 'q')
-//	{
-//	main_menu_driver(main_menu.menu, c);
+	keypad(menu_window, TRUE);
+	while((c = wgetch(menu_window)) != 'q')
+	{
+	main_menu_driver(main_menu.menu, c);
                
-//		update_panels();
-//        doupdate();
-//	}
+		update_panels();
+        doupdate();
+	}
 	
-	// FORM INTERFACE
+/*	// FORM INTERFACE
 	post_form(active_form->form);
 	form_highlight_active(active_form->form);
 	keypad(popup_window, TRUE);
@@ -130,7 +165,7 @@ int main(void)
         
  //       mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
  //       mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
-	}
+	}*/
 
 	free_menu_struct(main_menu);
 //	free_form_struct(settings_form);

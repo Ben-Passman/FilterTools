@@ -12,6 +12,8 @@
  *
  ************************************************************************************************ */
 
+#include "waveforms.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -128,4 +130,57 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 		exit(1);
 	}
 	fclose(fp);
+}
+
+void add_wave(struct WaveList *list)
+{
+	struct WaveForm *selection = list->selected;
+	struct WaveForm *new_wave = malloc(sizeof(struct WaveForm));
+	new_wave->next = NULL;
+	new_wave->previous = NULL;
+
+	if (list->first == NULL)
+	{
+		list->first = new_wave;
+		list->selected = new_wave;
+	}
+	else
+	{
+		// Insert new_wave after selection
+		new_wave->next = selection->next;
+		new_wave->previous = selection;
+		selection->next = new_wave;
+		if (new_wave->next != NULL)
+		{
+			new_wave->next->previous = new_wave;
+		}
+
+		list->selected = new_wave;
+	}
+}
+
+void delete_wave(struct WaveList *list)
+{
+	if (list->selected != NULL)
+	{
+		struct WaveForm *old_wave = list->selected;
+		struct WaveForm *next_wave = old_wave->next;
+		struct WaveForm *previous_wave = old_wave->previous;
+		if (previous_wave != NULL)
+		{
+			previous_wave->next = old_wave->next;
+			list->selected = previous_wave;
+		}
+		if (next_wave != NULL)
+		{
+			next_wave->previous = old_wave->previous;
+			list->selected = next_wave;
+		}
+		if (list->selected == old_wave)
+		{
+			list->first = NULL;
+			list->selected = NULL;
+		}
+		free(old_wave);
+	}
 }
