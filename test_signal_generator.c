@@ -112,12 +112,9 @@ int main(void)
 	
 	struct Menu main_menu = main_menu_setup(menu_window);
 
-	PANEL *menu_panel;
-	PANEL *output_panel;
-	PANEL *popup_panel;
-	menu_panel = new_panel(menu_window);
-	output_panel = new_panel(output_window);
-	popup_panel = new_panel(popup_window);
+	PANEL *menu_panel = new_panel(menu_window);
+	PANEL *output_panel = new_panel(output_window);
+	PANEL *popup_panel = new_panel(popup_window);
 
 	hide_panel(popup_panel);
 
@@ -172,6 +169,11 @@ int main(void)
 	free_form_struct(wave_form);
 //	free_form_struct(file_form);
 //	free_form_struct(alert_form);
+	
+	free(popup_panel);
+	free(menu_panel);
+	free(output_panel);
+
 	endwin();
 	
     return 1;

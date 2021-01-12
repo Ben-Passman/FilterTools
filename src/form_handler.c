@@ -40,7 +40,7 @@ static struct Dropdown dropdown_lists[] = {
 static bool is_valid_number_field(FIELD *field, const void *p)
 {
 	char * contents = field_buffer(field, 0);
-	char * temp = (char *) calloc(strlen(contents), sizeof(char));
+	char * temp = calloc(strlen(contents), sizeof(char));
 
 	strip_whitespace(contents, temp);
 	format_number_string(temp, SCIENTIFIC_FIELD_REGEX, temp);
@@ -76,8 +76,8 @@ struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int
 		}
 	}
 	
-	this_form.fields = (FIELD **) calloc(this_form.field_count + 1, sizeof(FIELD *));
-	this_form.field_types = (enum FieldType *) calloc(this_form.field_count + 1, sizeof(enum FieldType));
+	this_form.fields = calloc(this_form.field_count + 1, sizeof(FIELD *));
+	this_form.field_types = calloc(this_form.field_count + 1, sizeof(enum FieldType));
 
 	int field_index = 0;
 	int list_index;

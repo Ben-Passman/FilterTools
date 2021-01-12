@@ -32,7 +32,7 @@ struct Menu main_menu_setup(WINDOW *menu_window)
 	const char *main_menu_options[] = MAIN_MENU_OPTIONS;
 	main_menu.item_count = sizeof(main_menu_options) / sizeof(main_menu_options[0]);
 
-	main_menu.items = (ITEM **) calloc(main_menu.item_count + 1, sizeof(ITEM *));
+	main_menu.items = calloc(main_menu.item_count + 1, sizeof(ITEM *));
 
 	for(int i = 0; i < main_menu.item_count; ++i)
 	{
@@ -40,7 +40,7 @@ struct Menu main_menu_setup(WINDOW *menu_window)
 	}
 	main_menu.items[main_menu.item_count] = (ITEM *)NULL;
 
-	main_menu.menu = new_menu((ITEM **) main_menu.items);
+	main_menu.menu = new_menu(main_menu.items);
 	set_menu_win(main_menu.menu, menu_window);
 	set_menu_sub(main_menu.menu, derwin(menu_window, 0, 0, 1, 1));
 	set_menu_mark(main_menu.menu, " * ");

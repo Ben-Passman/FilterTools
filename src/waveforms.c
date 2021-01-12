@@ -135,7 +135,7 @@ void generate_signal(const int number_of_samples, const long double sample_rate)
 void add_wave(struct WaveList *list)
 {
 	struct WaveForm *selection = list->selected;
-	struct WaveForm *new_wave = malloc(sizeof(struct WaveForm));
+	struct WaveForm *new_wave = calloc(1, sizeof(struct WaveForm));
 	new_wave->next = NULL;
 	new_wave->previous = NULL;
 
