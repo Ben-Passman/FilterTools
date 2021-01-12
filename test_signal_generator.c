@@ -15,18 +15,10 @@
 
 #include "test_signal_generator.h"
 #include "src/form_handler.h"
-#include "src/menu_handler.h"
 #include "src/waveforms.h"
 
-#include "src/input_validation.h"
-
 #include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <errno.h>
 
-#include <menu.h>
-#include <form.h>
 #include <panel.h>
 
 struct FormTemplate main_settings[] = {
@@ -76,6 +68,9 @@ void print_waves(WINDOW *window, struct WaveList *wlist)
 {
 	struct WaveForm *wave = wlist->first;
 	int row = 2;
+        wattron(window, A_REVERSE);
+    mvwprintw(window, 1, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
+	wattroff(window, A_REVERSE);
 	while(wave != NULL)
 	{
 		if (wave == wlist->selected)
@@ -102,17 +97,12 @@ int main(void)
 	noecho();	// User input is not echoed
 	curs_set(0);	// Hide cursor
 	
-	WINDOW *menu_window = newwin(MAIN_MENU_SIZE, MAIN_MENU_LOCATION);
 	WINDOW *output_window = newwin(OUTPUT_WINDOW_SIZE, OUTPUT_WINDOW_LOCATION);
 	WINDOW *popup_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
 		
-	box(menu_window, 0, 0);
 	box(output_window, 0, 0);
 	box(popup_window, 0, 0);
 	
-	struct Menu main_menu = main_menu_setup(menu_window);
-
-	PANEL *menu_panel = new_panel(menu_window);
 	PANEL *output_panel = new_panel(output_window);
 	PANEL *popup_panel = new_panel(popup_window);
 
@@ -127,29 +117,15 @@ int main(void)
 
 	update_panels();
 	doupdate();
-
-    wattron(output_window, A_REVERSE);
-    mvwprintw(output_window, 1, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
-	wattroff(output_window, A_REVERSE);
     
     struct WaveList waves = { NULL, NULL };
-	add_wave(&waves);
-	add_wave(&waves);
-	add_wave(&waves);
-	add_wave(&waves);
-	waves.selected = waves.selected->previous;
 	print_waves(output_window, &waves);
-
 
 	// MENU INTERFACE
 	int c = 0;
-	keypad(menu_window, TRUE);
-	while((c = wgetch(menu_window)) != 'q')
+	keypad(output_window, TRUE);
+	while((c = wgetch(output_window)) != 'q')
 	{
-		main_menu_driver(main_menu.menu, c);
-		update_panels();
-		doupdate();
-
 		switch(c)
 		{
 			case KEY_UP :
@@ -171,6 +147,7 @@ int main(void)
 				delete_wave(&waves);
 				break;	
 		}
+		
 		print_waves(output_window, &waves);
 	}
 	
@@ -187,20 +164,17 @@ int main(void)
  //       mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
 	}*/
 
+    while (waves.first != NULL)
+    {
+        delete_wave(&waves);
+    }
 
-	delete_wave(&waves);
-	delete_wave(&waves);
-	delete_wave(&waves);
-	delete_wave(&waves);
-
-	free_menu_struct(main_menu);
 //	free_form_struct(settings_form);
 	free_form_struct(wave_form);
 //	free_form_struct(file_form);
 //	free_form_struct(alert_form);
 	
 	free(popup_panel);
-	free(menu_panel);
 	free(output_panel);
 
 	endwin();
