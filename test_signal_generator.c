@@ -76,7 +76,6 @@ void print_waves(WINDOW *window, struct WaveList *wlist)
 {
 	struct WaveForm *wave = wlist->first;
 	int row = 2;
-
 	while(wave != NULL)
 	{
 		if (wave == wlist->selected)
@@ -87,8 +86,7 @@ void print_waves(WINDOW *window, struct WaveList *wlist)
 		{
 			wattroff(window, A_REVERSE);
 		}
-		mvwprintw(window, row, 2, "Testing...");
-
+		mvwprintw(window, row, 2, "SAWTOOTH   1000.000    1000.000 Hz   1000.000  1.0    1000.000  SUBTRACT");
 		wave = wave->next;
 		row++;
 	}
@@ -128,27 +126,44 @@ int main(void)
 	update_panels();
 	doupdate();
 
-	struct WaveList waves = { NULL, NULL };
+    wattron(output_window, A_REVERSE);
+    mvwprintw(output_window, 1, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
+	wattroff(output_window, A_REVERSE);
+    
+    struct WaveList waves = { NULL, NULL };
 	add_wave(&waves);
 	add_wave(&waves);
 	add_wave(&waves);
 	add_wave(&waves);
 	waves.selected = waves.selected->previous;
 	print_waves(output_window, &waves);
-	delete_wave(&waves);
-	delete_wave(&waves);
-	delete_wave(&waves);
-	delete_wave(&waves);
+
 
 	// MENU INTERFACE
 	int c = 0;
 	keypad(menu_window, TRUE);
 	while((c = wgetch(menu_window)) != 'q')
 	{
-	main_menu_driver(main_menu.menu, c);
-               
+		main_menu_driver(main_menu.menu, c);
 		update_panels();
-        doupdate();
+		doupdate();
+
+		switch(c)
+		{
+			case KEY_UP :
+				if (waves.selected != NULL && waves.selected->previous != NULL)
+				{
+					waves.selected = waves.selected->previous;
+				}
+				break;
+			case KEY_DOWN :
+				if (waves.selected != NULL && waves.selected->next != NULL)
+				{
+					waves.selected = waves.selected->next;
+				}
+				break;	
+		}
+		print_waves(output_window, &waves);
 	}
 	
 /*	// FORM INTERFACE
@@ -163,6 +178,12 @@ int main(void)
  //       mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
  //       mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
 	}*/
+
+
+	delete_wave(&waves);
+	delete_wave(&waves);
+	delete_wave(&waves);
+	delete_wave(&waves);
 
 	free_menu_struct(main_menu);
 //	free_form_struct(settings_form);
