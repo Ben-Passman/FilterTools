@@ -124,6 +124,10 @@ int main(void)
 	// MENU INTERFACE
 	int c = 0;
 	keypad(output_window, TRUE);
+	keypad(popup_window, TRUE);
+	post_form(active_form->form);
+	form_highlight_active(active_form->form);	
+
 	while((c = wgetch(output_window)) != 'q')
 	{
 		switch(c)
@@ -145,26 +149,29 @@ int main(void)
 				break;
 			case 'd' :
 				delete_wave(&waves);
-				break;	
+				break;
+			case '\n' :
+				show_panel(popup_panel);
+				update_panels();
+				doupdate();
+				while((c = wgetch(popup_window)) != 'q')
+				{
+				        form_menu_driver(popup_window, active_form, c);
+//	mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(wave_form.form)));
+//	mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(wave_form.form), 0));             
+				}
+				hide_panel(popup_panel);
+				update_panels();
+				doupdate();
+				break;
 		}
-		
-		print_waves(output_window, &waves);
+		if (panel_hidden(popup_panel))
+		{
+			print_waves(output_window, &waves);
+		}
 	}
 	
-/*	// FORM INTERFACE
-	post_form(active_form->form);
-	form_highlight_active(active_form->form);
-	keypad(popup_window, TRUE);
-	
-	while((c = wgetch(popup_window)) != 'q')
-	{
-        form_menu_driver(popup_window, active_form, c);
-        
- //       mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(file_form.form)));
- //       mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(file_form.form), 0));             
-	}*/
-
-    while (waves.first != NULL)
+	while (waves.first != NULL)
     {
         delete_wave(&waves);
     }
