@@ -166,11 +166,16 @@ void delete_wave(struct WaveList *list)
 		struct WaveForm *old_wave = list->selected;
 		struct WaveForm *next_wave = old_wave->next;
 		struct WaveForm *previous_wave = old_wave->previous;
-		if (previous_wave != NULL)
+
+        if (previous_wave != NULL)
 		{
 			previous_wave->next = old_wave->next;
 			list->selected = previous_wave;
 		}
+		else
+        {
+            list->first = old_wave->next;
+        }
 		if (next_wave != NULL)
 		{
 			next_wave->previous = old_wave->previous;

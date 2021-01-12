@@ -90,6 +90,8 @@ void print_waves(WINDOW *window, struct WaveList *wlist)
 		wave = wave->next;
 		row++;
 	}
+	wattroff(window, A_REVERSE);
+	mvwprintw(window, row, 2, "                                                                        ");
 	wrefresh(window);
 }
 
@@ -151,16 +153,22 @@ int main(void)
 		switch(c)
 		{
 			case KEY_UP :
-				if (waves.selected != NULL && waves.selected->previous != NULL)
+				if (waves.first != NULL && waves.selected->previous != NULL)
 				{
 					waves.selected = waves.selected->previous;
 				}
 				break;
 			case KEY_DOWN :
-				if (waves.selected != NULL && waves.selected->next != NULL)
+				if (waves.first != NULL && waves.selected->next != NULL)
 				{
 					waves.selected = waves.selected->next;
 				}
+				break;
+			case 'a' :
+				add_wave(&waves);
+				break;
+			case 'd' :
+				delete_wave(&waves);
 				break;	
 		}
 		print_waves(output_window, &waves);
