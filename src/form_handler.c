@@ -163,6 +163,12 @@ void update_field_text(WINDOW *window, FORM *form)
 	{
 		switch(c)
 		{
+			case KEY_HOME :
+				form_driver(form, REQ_BEG_LINE);
+				break;
+			case KEY_END :
+				form_driver(form, REQ_END_LINE);
+				break;
 			case KEY_LEFT :
 				form_driver(form, REQ_PREV_CHAR);
 				break;

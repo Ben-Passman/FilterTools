@@ -62,17 +62,14 @@ int main(void)
 	
 	PANEL *output_panel = new_panel(output_window);
 	PANEL *popup_panel = new_panel(popup_window);
-
 	hide_panel(popup_panel);
+	update_panels();
+	doupdate();
 
 	init_form_handler();
 	struct Form wave_form = wave_settings_setup(popup_window);
 	struct Form *active_form = &wave_form;
-
-	update_panels();
-	doupdate();
-    
-    struct WaveList waves = { NULL, NULL };
+	struct WaveList waves = { NULL, NULL };
 	print_waves(output_window, &waves);
 
 	// MENU INTERFACE
