@@ -22,20 +22,14 @@
 
 struct Dropdown
 {
-	int selected_item_index;
+	int selected;
 	const char **item_list;
 	const int size;
 };
 
+// Custom types for field validation
 static FIELDTYPE *FIELD_SCIENTIFIC = NULL;
 static FIELDTYPE *FIELD_INDEX = NULL;
-
-static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
-static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "AM", "FM" };
-static struct Dropdown dropdown_lists[] = { 
-	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
-	{ 0, &modes[0], sizeof modes / sizeof modes[0] }
-}; 
 
 static bool is_valid_number_field(FIELD *field, const void *p)
 {
@@ -61,6 +55,7 @@ void init_form_handler(void)
     FIELD_INDEX = new_fieldtype(NULL, &is_integer_char);
 }
 
+// General setup functions
 static void field_setup(FIELD **fields, enum FieldType *types, int size)
 {
     for (int i = 0; i < size; i++)
@@ -95,8 +90,16 @@ static FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns)
 	return form;
 }
 
+// Wave data input form
 struct Form wave_settings_setup (WINDOW *window)
 {
+	static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
+	static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "AM", "FM" };
+	static struct Dropdown settings_dropdowns[] = { 
+		{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
+		{ 0, &modes[0], sizeof modes / sizeof modes[0] }
+	}; 
+	
 	mvwprintw(window, 2, 4, "Shape:");
 	mvwprintw(window, 4, 4, "Amplitude:");
 	mvwprintw(window, 6, 4, "Frequency:");
@@ -134,8 +137,8 @@ struct Form wave_settings_setup (WINDOW *window)
 	settings.fields[8] = new_field(1, 8, 14, 10, 0, 0);
 	settings.fields[9] = NULL;
     
-	set_field_userptr(settings.fields[0], (void *) &dropdown_lists[0]);
-	set_field_userptr(settings.fields[5], (void *) &dropdown_lists[1]);
+	set_field_userptr(settings.fields[0], (void *) &settings_dropdowns[0]);
+	set_field_userptr(settings.fields[5], (void *) &settings_dropdowns[1]);
 	set_field_buffer(settings.fields[7], 0, "   Ok   ");
 	set_field_buffer(settings.fields[8], 0, " Cancel ");
     	
@@ -145,6 +148,7 @@ struct Form wave_settings_setup (WINDOW *window)
 	return settings;
 }
 
+// Form interface functions
 void form_highlight_active(FORM *form)
 {
 	for(int i = 0; i < form->maxfield; i++)
@@ -193,41 +197,41 @@ void update_field_text(WINDOW *window, FORM *form)
 
 void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 {
-	int index;
+	int field_type;
 
 	switch(c)
 	{
 		case KEY_LEFT :
-			index = *(menu->field_types + field_index(current_field(menu->form)));
-			if (index == LIST_FIELD)
+			field_type = *(menu->field_types + field_index(current_field(menu->form)));
+			if (field_type == LIST_FIELD)
 			{
-				struct Dropdown *list_contents = (struct Dropdown *) field_userptr(current_field(menu->form));
-				if (list_contents->selected_item_index < 1)
+				struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
+				if (list->selected < 1)
 				{
-					list_contents->selected_item_index = list_contents->size;
+					list->selected = list->size;
 				}
-				list_contents->selected_item_index--;
-				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
+				list->selected--;
+				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->selected));
 			}
-			else if (index == CANCEL_FIELD)
+			else if (field_type == CANCEL_FIELD)
 			{
 				form_driver(menu->form, REQ_PREV_FIELD);
 				form_highlight_active(menu->form);
 			}
 			break;
 		case KEY_RIGHT :
-			index = *(menu->field_types + field_index(current_field(menu->form)));
-			if (index == LIST_FIELD)
+			field_type = *(menu->field_types + field_index(current_field(menu->form)));
+			if (field_type == LIST_FIELD)
 			{
-				struct Dropdown *list_contents = (struct Dropdown *) field_userptr(current_field(menu->form));
-				list_contents->selected_item_index++;
-				if (list_contents->selected_item_index >= list_contents->size)
+				struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
+				list->selected++;
+				if (list->selected >= list->size)
 				{
-					list_contents->selected_item_index = 0;
+					list->selected = 0;
 				}
-				set_field_buffer(current_field(menu->form), 0, *(list_contents->item_list + list_contents->selected_item_index));
+				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->selected));
 			}
-			else if (index == OK_FIELD)
+			else if (field_type == OK_FIELD)
 			{
 				form_driver(menu->form, REQ_NEXT_FIELD);
 				form_highlight_active(menu->form);
@@ -242,8 +246,8 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 			form_highlight_active(menu->form);
 			break;
 		case '\n' :
-        		index = *(menu->field_types + field_index(current_field(menu->form)));
-			switch(index)
+        		field_type = *(menu->field_types + field_index(current_field(menu->form)));
+			switch(field_type)
 			{
 				case PATH_FIELD :
 					form_driver(menu->form, REQ_END_LINE);
