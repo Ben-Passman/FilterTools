@@ -61,73 +61,88 @@ void init_form_handler(void)
     FIELD_INDEX = new_fieldtype(NULL, &is_integer_char);
 }
 
-struct Form wave_settings_setup (WINDOW *window)
+static void field_setup(FIELD **fields, enum FieldType *types, int size)
 {
-    struct Form settings_form;
-    
-    mvwprintw(window, 2, 4, "Shape:");
-    mvwprintw(window, 4, 4, "Amplitude:");
-    mvwprintw(window, 6, 4, "Frequency:");
-    mvwprintw(window, 6, 36, "Hz");
-    mvwprintw(window, 8, 4, "Phase:");
-    mvwprintw(window, 10, 4, "Duty:");
-    mvwprintw(window, 12, 4, "Mode:");
-    mvwprintw(window, 14, 4, "Index:");
-    
-    enum FieldType types[] = { LIST_FIELD, NUMBER_FIELD, NUMBER_FIELD, NUMBER_FIELD, NUMBER_FIELD, LIST_FIELD, INDEX_FIELD, OK_FIELD, CANCEL_FIELD };
-    
-    settings_form.field_count = 10;
-    settings_form.fields = calloc(settings_form.field_count + 1, sizeof(FIELD *));
-	settings_form.field_types = calloc(settings_form.field_count + 1, sizeof(enum FieldType));
-    
-    settings_form.fields[0] = new_field(1, 20, 0, 0, 0, 0);
-    settings_form.fields[1] = new_field(1, 20, 2, 0, 0, 0);
-    settings_form.fields[2] = new_field(1, 20, 4, 0, 0, 0);
-    settings_form.fields[3] = new_field(1, 20, 6, 0, 0, 0);
-    settings_form.fields[4] = new_field(1, 20, 8, 0, 0, 0);
-    settings_form.fields[5] = new_field(1, 20, 10, 0, 0, 0);
-    settings_form.fields[6] = new_field(1, 20, 12, 0, 0, 0);
-    settings_form.fields[7] = new_field(1, 8, 14, 0, 0, 0);
-    settings_form.fields[8] = new_field(1, 8, 14, 10, 0, 0);
-    settings_form.fields[9] = NULL;
-    
-    set_field_userptr(settings_form.fields[0], (void *) &dropdown_lists[0]);
-    set_field_buffer(settings_form.fields[0], 0, "Sine");
-    set_field_userptr(settings_form.fields[5], (void *) &dropdown_lists[1]);
-    set_field_buffer(settings_form.fields[5], 0, "Add");
-    set_field_buffer(settings_form.fields[7], 0, "   Ok   ");
-    set_field_buffer(settings_form.fields[8], 0, " Cancel ");
-    
-	for (int i = 0; i < settings_form.field_count; i++)
+    for (int i = 0; i < size; i++)
 	{
-		field_opts_off(settings_form.fields[i], O_AUTOSKIP | O_BLANK);
-        *(settings_form.field_types + i) = types[i];        
-		switch (types[i])
+		field_opts_off(*(fields + i), O_AUTOSKIP | O_BLANK);
+		switch (*(types + i))
 		{
 			case NUMBER_FIELD :
-				set_field_type(settings_form.fields[i], FIELD_SCIENTIFIC);
+				set_field_type(*(fields + i), FIELD_SCIENTIFIC);
 			case PATH_FIELD :
-				field_opts_off(settings_form.fields[i], O_STATIC);
-				set_field_back(settings_form.fields[i], A_UNDERLINE);
-				set_max_field(settings_form.fields[i], 1024);	
+				field_opts_off(*(fields + i), O_STATIC);
+				set_field_back(*(fields + i), A_UNDERLINE);
+				set_max_field(*(fields + i), 1024);	
 				break;
 			case INDEX_FIELD :
-				set_field_type(settings_form.fields[i], FIELD_INDEX);
+				set_field_type(*(fields + i), FIELD_INDEX);
 				break;
 			default :
 				break;			
 		}
 	}
-	
-	int rows = 8;
-	int cols = 28;
-	settings_form.form = new_form(settings_form.fields);
-	scale_form(settings_form.form, &rows, &cols);
-	set_form_win(settings_form.form, window);
-	set_form_sub(settings_form.form, derwin(window, rows, cols, 2, 15));
-	form_opts_off(settings_form.form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
+}
 
-	return settings_form;
+static FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns)
+{
+    FORM *form = new_form(fields);
+	scale_form(form, &rows, &columns);
+	set_form_win(form, window);
+	set_form_sub(form, derwin(window, rows, columns, 2, 15));
+	form_opts_off(form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
+
+	return form;
+}
+
+struct Form wave_settings_setup (WINDOW *window)
+{
+	mvwprintw(window, 2, 4, "Shape:");
+	mvwprintw(window, 4, 4, "Amplitude:");
+	mvwprintw(window, 6, 4, "Frequency:");
+	mvwprintw(window, 6, 36, "Hz");
+	mvwprintw(window, 8, 4, "Phase:");
+	mvwprintw(window, 10, 4, "Duty:");
+	mvwprintw(window, 12, 4, "Mode:");
+	mvwprintw(window, 14, 4, "DC Offset:");
+	
+	static enum FieldType types[] = { 
+		LIST_FIELD, 
+		NUMBER_FIELD, 
+		NUMBER_FIELD, 
+		NUMBER_FIELD, 
+		NUMBER_FIELD, 
+		LIST_FIELD, 
+		NUMBER_FIELD, 
+		OK_FIELD, 
+		CANCEL_FIELD 
+	};
+	
+	struct Form settings;
+	settings.field_count = 9;
+	settings.fields = calloc(settings.field_count + 1, sizeof(FIELD *));
+	settings.field_types = &types[0];
+        
+	settings.fields[0] = new_field(1, 20, 0, 0, 0, 0);
+	settings.fields[1] = new_field(1, 20, 2, 0, 0, 0);
+	settings.fields[2] = new_field(1, 20, 4, 0, 0, 0);
+	settings.fields[3] = new_field(1, 20, 6, 0, 0, 0);
+	settings.fields[4] = new_field(1, 20, 8, 0, 0, 0);
+	settings.fields[5] = new_field(1, 20, 10, 0, 0, 0);
+	settings.fields[6] = new_field(1, 20, 12, 0, 0, 0);
+	settings.fields[7] = new_field(1, 8, 14, 0, 0, 0);
+	settings.fields[8] = new_field(1, 8, 14, 10, 0, 0);
+	settings.fields[9] = NULL;
+    
+	set_field_userptr(settings.fields[0], (void *) &dropdown_lists[0]);
+	set_field_userptr(settings.fields[5], (void *) &dropdown_lists[1]);
+	set_field_buffer(settings.fields[7], 0, "   Ok   ");
+	set_field_buffer(settings.fields[8], 0, " Cancel ");
+    	
+	field_setup(settings.fields, types, settings.field_count);
+	settings.form = form_setup(window, settings.fields, 8, 28);
+
+	return settings;
 }
 
 void form_highlight_active(FORM *form)
@@ -258,7 +273,6 @@ void free_form_struct(struct Form form_struct)
 		free_field(form_struct.fields[i]);
 	}
 	free(form_struct.fields);
-	free(form_struct.field_types);
 	free_fieldtype(FIELD_SCIENTIFIC);
 	free_fieldtype(FIELD_INDEX);
 }
