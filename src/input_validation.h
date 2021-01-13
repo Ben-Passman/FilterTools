@@ -18,7 +18,6 @@
 void strip_whitespace(const char *string, char *new_string);
 int format_number_string(const char *string, const char *expression, char *result);
 double ASCII_string_to_double(const char *string);
-void print_scientific(double number);
-void print_SI(double number);
+void sprint_SI(char *string, double number);
 
 #endif

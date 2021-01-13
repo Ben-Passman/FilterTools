@@ -169,26 +169,7 @@ double ASCII_string_to_double(const char *string)
 	return result;
 }
 
-void print_scientific(double number)
-{
-	int exponent = 0;
-	if (number != 0.0)
-	{
-		while (number < 1 && number > -1)
-		{
-			number *= 10;
-			exponent--;
-		}
-		while (number >= 10 || number <= -10)
-		{
-			number *= 0.1;
-			exponent++;
-		}
-	}
-	printf("%lfe%d\n", number, exponent);
-}
-
-void print_SI(double number)
+void sprint_SI(char *string, double number)
 {
 	int index = SI_PREFIX_OFFSET;
 	if(number != 0.0)
@@ -204,17 +185,5 @@ void print_SI(double number)
 			index++;
 		}
 	}
-	printf("%lf%c\n", number, SI_prefixes[index]);
+	sprintf(string, "%8.3lf%c\n", number, SI_prefixes[index]);
 }
-
-/*int main(int argc, char ** argv)
-{
-	if(argc > 1)
-	{
-		double number = ASCII_string_to_double(argv[1]);
-		printf("%lf\n", number);
-		print_scientific(number);
-		print_SI(number);
-	}
-	return 0;
-}*/
