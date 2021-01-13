@@ -61,74 +61,73 @@ void init_form_handler(void)
     FIELD_INDEX = new_fieldtype(NULL, &is_integer_char);
 }
 
-struct Form form_setup(WINDOW *form_window, struct FormTemplate *field_list, int size)
+struct Form wave_settings_setup (WINDOW *window)
 {
-	struct Form this_form;
-	this_form.field_count = size;
-	
-	for (int i = 0; i < size; i++)
+    struct Form settings_form;
+    
+    mvwprintw(window, 2, 4, "Shape:");
+    mvwprintw(window, 4, 4, "Amplitude:");
+    mvwprintw(window, 6, 4, "Frequency:");
+    mvwprintw(window, 6, 36, "Hz");
+    mvwprintw(window, 8, 4, "Phase:");
+    mvwprintw(window, 10, 4, "Duty:");
+    mvwprintw(window, 12, 4, "Mode:");
+    mvwprintw(window, 14, 4, "Index:");
+    
+    enum FieldType types[] = { LIST_FIELD, NUMBER_FIELD, NUMBER_FIELD, NUMBER_FIELD, NUMBER_FIELD, LIST_FIELD, INDEX_FIELD, OK_FIELD, CANCEL_FIELD };
+    
+    settings_form.field_count = 10;
+    settings_form.fields = calloc(settings_form.field_count + 1, sizeof(FIELD *));
+	settings_form.field_types = calloc(settings_form.field_count + 1, sizeof(enum FieldType));
+    
+    settings_form.fields[0] = new_field(1, 20, 0, 0, 0, 0);
+    settings_form.fields[1] = new_field(1, 20, 2, 0, 0, 0);
+    settings_form.fields[2] = new_field(1, 20, 4, 0, 0, 0);
+    settings_form.fields[3] = new_field(1, 20, 6, 0, 0, 0);
+    settings_form.fields[4] = new_field(1, 20, 8, 0, 0, 0);
+    settings_form.fields[5] = new_field(1, 20, 10, 0, 0, 0);
+    settings_form.fields[6] = new_field(1, 20, 12, 0, 0, 0);
+    settings_form.fields[7] = new_field(1, 8, 14, 0, 0, 0);
+    settings_form.fields[8] = new_field(1, 8, 14, 10, 0, 0);
+    settings_form.fields[9] = NULL;
+    
+    set_field_userptr(settings_form.fields[0], (void *) &dropdown_lists[0]);
+    set_field_buffer(settings_form.fields[0], 0, "Sine");
+    set_field_userptr(settings_form.fields[5], (void *) &dropdown_lists[1]);
+    set_field_buffer(settings_form.fields[5], 0, "Add");
+    set_field_buffer(settings_form.fields[7], 0, "   Ok   ");
+    set_field_buffer(settings_form.fields[8], 0, " Cancel ");
+    
+	for (int i = 0; i < settings_form.field_count; i++)
 	{
-		struct FormTemplate *f = (field_list + i);
-		if (f->type == LABEL_FIELD)
+		field_opts_off(settings_form.fields[i], O_AUTOSKIP | O_BLANK);
+        *(settings_form.field_types + i) = types[i];        
+		switch (types[i])
 		{
-			mvwprintw(form_window, f->row, f->column, f->text);
-			this_form.field_count--;
+			case NUMBER_FIELD :
+				set_field_type(settings_form.fields[i], FIELD_SCIENTIFIC);
+			case PATH_FIELD :
+				field_opts_off(settings_form.fields[i], O_STATIC);
+				set_field_back(settings_form.fields[i], A_UNDERLINE);
+				set_max_field(settings_form.fields[i], 1024);	
+				break;
+			case INDEX_FIELD :
+				set_field_type(settings_form.fields[i], FIELD_INDEX);
+				break;
+			default :
+				break;			
 		}
 	}
-	
-	this_form.fields = calloc(this_form.field_count + 1, sizeof(FIELD *));
-	this_form.field_types = calloc(this_form.field_count + 1, sizeof(enum FieldType));
-
-	int field_index = 0;
-	int list_index;
-	for (int i = 0; i < size; i++)
-	{
-		struct FormTemplate *f = (field_list + i);
-		*(this_form.field_types + field_index) = f->type;
-		if (f->type != LABEL_FIELD)
-		{
- 			this_form.fields[field_index] = new_field(f->row_size, f->column_size, f->row, f->column, 0, 0);
-			field_opts_off(this_form.fields[field_index], O_AUTOSKIP | O_BLANK);
-			set_field_buffer(this_form.fields[field_index], 0, f->text);
-			
-			switch (f->type)
-			{
-				case NUMBER_FIELD :
-					set_field_type(this_form.fields[field_index], FIELD_SCIENTIFIC);
-				case PATH_FIELD :
-					field_opts_off(this_form.fields[field_index], O_STATIC);
-					set_field_back(this_form.fields[field_index], A_UNDERLINE);
-					set_max_field(this_form.fields[field_index], 1024);	
-					break;
-				case LIST_FIELD :
-					list_index = (int) (*f->text - '0');
-					set_field_userptr(this_form.fields[field_index], (void *) &dropdown_lists[list_index]);
-					set_field_buffer(this_form.fields[field_index], 0, *dropdown_lists[list_index].item_list);
-					break;
-				case INDEX_FIELD :
-					set_field_type(this_form.fields[field_index], FIELD_INDEX);
-					break;
-				case OK_FIELD :
-				case CANCEL_FIELD :
-					break;
-				default :
-					break;			
-			}
-			field_index++;
-		}
-	}
-	this_form.fields[field_index] = NULL;
 	
 	int rows = 8;
 	int cols = 28;
-	this_form.form = new_form(this_form.fields);
-	scale_form(this_form.form, &rows, &cols);
-	set_form_win(this_form.form, form_window);
-	set_form_sub(this_form.form, derwin(form_window, rows, cols, 2, 15));
-	form_opts_off(this_form.form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
-//	post_form(this_form.form);
+	settings_form.form = new_form(settings_form.fields);
+	scale_form(settings_form.form, &rows, &cols);
+	set_form_win(settings_form.form, window);
+	set_form_sub(settings_form.form, derwin(window, rows, cols, 2, 15));
+	form_opts_off(settings_form.form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
 
-	return this_form;
+	return settings_form;
 }
 
 void form_highlight_active(FORM *form)
