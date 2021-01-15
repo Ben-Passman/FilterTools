@@ -14,8 +14,7 @@
  ************************************************************************************************ */
 
 #include "test_signal_generator.h"
-#include "src/form_handler.h"
-#include "src/waveforms.h"
+#include "src/ui_forms.h"
 
 #include <stdlib.h>
 

@@ -35,9 +35,16 @@ struct FormTemplate {
 	char * text;
 };
 
-void validate_numeric(FORM *form);
+struct Dropdown
+{
+	int selected;
+	const char **item_list;
+	const int size;
+};
+
 void init_form_handler(void);
-struct Form wave_settings_setup (WINDOW *window);
+void field_setup(FIELD **fields, enum FieldType *types, int size);
+FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns);
 void form_highlight_active(FORM *form);
 void update_field_text(WINDOW *window, FORM *form);
 void form_menu_driver(WINDOW *window, struct Form *form, int c);
