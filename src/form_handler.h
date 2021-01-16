@@ -15,6 +15,8 @@
  *
  ************************************************************************************************ */
 
+#include "input_validation.h"
+
 #include <form.h>
 
 enum FieldType { LABEL_FIELD, PATH_FIELD, INDEX_FIELD, NUMBER_FIELD, LIST_FIELD, OK_FIELD, CANCEL_FIELD };
@@ -37,7 +39,7 @@ struct FormTemplate {
 
 struct Dropdown
 {
-	int selected;
+	int index;
 	const char **item_list;
 	const int size;
 };

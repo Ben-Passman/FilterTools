@@ -13,7 +13,6 @@
  ************************************************************************************************ */
 
 #include "form_handler.h"
-#include "input_validation.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -141,12 +140,12 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 			if (field_type == LIST_FIELD)
 			{
 				struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
-				if (list->selected < 1)
+				if (list->index < 1)
 				{
-					list->selected = list->size;
+					list->index = list->size;
 				}
-				list->selected--;
-				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->selected));
+				list->index--;
+				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->index));
 			}
 			else if (field_type == CANCEL_FIELD)
 			{
@@ -159,12 +158,12 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 			if (field_type == LIST_FIELD)
 			{
 				struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
-				list->selected++;
-				if (list->selected >= list->size)
+				list->index++;
+				if (list->index >= list->size)
 				{
-					list->selected = 0;
+					list->index = 0;
 				}
-				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->selected));
+				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->index));
 			}
 			else if (field_type == OK_FIELD)
 			{
@@ -181,7 +180,7 @@ void form_menu_driver(WINDOW* window, struct Form *menu, int c)
 			form_highlight_active(menu->form);
 			break;
 		case '\n' :
-        		field_type = *(menu->field_types + field_index(current_field(menu->form)));
+            field_type = *(menu->field_types + field_index(current_field(menu->form)));
 			switch(field_type)
 			{
 				case PATH_FIELD :

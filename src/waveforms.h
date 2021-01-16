@@ -24,8 +24,8 @@ struct WaveForm {
     double frequency;
     double phase;
     double duty;
-    double dc_offset;
     enum WaveMode mode;
+    double dc_offset;
     struct WaveForm *previous;
     struct WaveForm *next;
 };

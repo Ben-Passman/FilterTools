@@ -1,5 +1,5 @@
-#ifndef FORMS
-#define FORMS
+#ifndef UI_FORMS
+#define UI_FORMS
 
 /************************************************************************************************
  * FilterTools/ui_forms.h
@@ -19,5 +19,7 @@
 #include "form_handler.h"
 
 struct Form wave_settings_setup (WINDOW *window);
+void set_wave_fields(const struct Form *wave_settings, const struct WaveForm *wave);
+void get_wave_fields(const struct Form *form, struct WaveForm *wave);
 
 #endif 

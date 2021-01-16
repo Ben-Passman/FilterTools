@@ -80,8 +80,17 @@ int main(void)
 
 	while((c = wgetch(output_window)) != 'q')
 	{
+		struct Dropdown *d;
 		switch(c)
 		{
+			case ' ' :
+				// Read field index:
+				d = (struct Dropdown *) field_userptr(active_form->fields[0]);
+				mvwprintw(output_window, 17, 2, "Form field 0 index: %d", d->index);
+				mvwprintw(output_window, 18, 2, "Selected wave %d", waves.selected->type);
+				
+
+				break;
 			case KEY_UP :
 				if (waves.first != NULL && waves.selected->previous != NULL)
 				{
@@ -101,18 +110,25 @@ int main(void)
 				delete_wave(&waves);
 				break;
 			case '\n' :
-				show_panel(popup_panel);
-				update_panels();
-				doupdate();
-				while((c = wgetch(popup_window)) != 'q')
+				if (waves.selected != NULL)
 				{
-				        form_menu_driver(popup_window, active_form, c);
-//	mvwprintw(popup_window, 12, 2, "Selected: %d", field_index(current_field(wave_form.form)));
-//	mvwprintw(popup_window, 13, 2, "Buffer contents: %s", field_buffer(current_field(wave_form.form), 0));             
+					set_wave_fields(active_form, waves.selected);
+
+					show_panel(popup_panel);
+					update_panels();
+					doupdate();
+					while((c = wgetch(popup_window)) != 'q')
+					{
+					        form_menu_driver(popup_window, active_form, c);
+					}
+					hide_panel(popup_panel);
+					update_panels();
+					doupdate();
+
+					get_wave_fields(active_form, waves.selected);
+				
+					mvwprintw(output_window, 18, 2, "%d, %lf, %lf, %lf, %lf, %d, %lf", waves.selected->type, waves.selected->amplitude, waves.selected->frequency, waves.selected->phase, waves.selected->duty, waves.selected->mode, waves.selected->dc_offset);
 				}
-				hide_panel(popup_panel);
-				update_panels();
-				doupdate();
 				break;
 		}
 		if (panel_hidden(popup_panel))

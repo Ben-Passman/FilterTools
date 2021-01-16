@@ -15,15 +15,16 @@
 #include "ui_forms.h"
 #include <stdlib.h>
 
+static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
+static const char *wave_modes[] = { "Add", "Subtract", "Multiply", "Divide", "AM", "FM" };
+static struct Dropdown settings_dropdowns[] = { 
+	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
+	{ 0, &wave_modes[0], sizeof wave_modes / sizeof wave_modes[0] }
+}; 
+	
+
 struct Form wave_settings_setup (WINDOW *window)
 {
-	static const char *wave_types[] = { "Sine", "Cosine", "Sawtooth", "Triangle", "Square" };
-	static const char *modes[] = { "Add", "Subtract", "Multiply", "Divide", "AM", "FM" };
-	static struct Dropdown settings_dropdowns[] = { 
-		{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
-		{ 0, &modes[0], sizeof modes / sizeof modes[0] }
-	}; 
-	
 	mvwprintw(window, 2, 4, "Shape:");
 	mvwprintw(window, 4, 4, "Amplitude:");
 	mvwprintw(window, 6, 4, "Frequency:");
@@ -70,4 +71,42 @@ struct Form wave_settings_setup (WINDOW *window)
 	settings.form = form_setup(window, settings.fields, 8, 28);
 
 	return settings;
+}
+
+void set_wave_fields(const struct Form *wave_settings, const struct WaveForm *wave)
+{
+    struct Dropdown *drop_down;
+    
+    drop_down = (struct Dropdown *) field_userptr(wave_settings->fields[0]);
+    drop_down->index = wave->type;
+    set_field_buffer(wave_settings->fields[0], 0, wave_types[drop_down->index]);
+    char temp[20];
+    sprintf(temp, "%lf", wave->amplitude);
+    set_field_buffer(wave_settings->fields[1], 0, temp);
+    sprintf(temp, "%lf", wave->frequency);
+    set_field_buffer(wave_settings->fields[2], 0, temp);
+    sprintf(temp, "%lf", wave->phase);
+    set_field_buffer(wave_settings->fields[3], 0, temp);
+    sprintf(temp, "%lf", wave->duty);
+    set_field_buffer(wave_settings->fields[4], 0, temp);
+    drop_down = (struct Dropdown *) field_userptr(wave_settings->fields[5]);
+    drop_down->index = wave->mode;
+    set_field_buffer((wave_settings->fields)[5], 0, wave_modes[drop_down->index]);
+    sprintf(temp, "%lf", wave->dc_offset);
+    set_field_buffer(wave_settings->fields[6], 0, temp);
+}
+
+void get_wave_fields(const struct Form *form, struct WaveForm *wave)
+{
+    struct Dropdown *drop_down;
+    
+    drop_down = (struct Dropdown *) field_userptr(form->fields[0]);
+    wave->type = drop_down->index;
+    wave->amplitude = ASCII_string_to_double(field_buffer(form->fields[1], 0));
+    wave->frequency = ASCII_string_to_double(field_buffer(form->fields[2], 0));
+    wave->phase = ASCII_string_to_double(field_buffer(form->fields[3], 0));
+    wave->duty = ASCII_string_to_double(field_buffer(form->fields[4], 0));
+    drop_down = (struct Dropdown *) field_userptr(form->fields[5]);
+    wave->mode = drop_down->index;
+    wave->dc_offset = ASCII_string_to_double(field_buffer(form->fields[6], 0));
 }
