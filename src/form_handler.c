@@ -125,82 +125,86 @@ void update_field_text(WINDOW *window, FORM *form)
 	curs_set(0);
 }
 
-void form_menu_driver(WINDOW* window, struct Form *menu, int c)
+int form_menu_driver(WINDOW* window, struct Form *menu)
 {
+	int c;
 	int field_type;
-
-	switch(c)
+	while (1)
 	{
-		case KEY_LEFT :
-			field_type = *(menu->field_types + field_index(current_field(menu->form)));
-			if (field_type == LIST_FIELD)
-			{
-				struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
-				if (list->index < 1)
+		c = wgetch(window);
+		switch(c)
+		{
+			case KEY_LEFT :
+				field_type = *(menu->field_types + field_index(current_field(menu->form)));
+				if (field_type == LIST_FIELD)
 				{
-					list->index = list->size;
+					struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
+					if (list->index < 1)
+					{
+						list->index = list->size;
+					}
+					list->index--;
+					set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->index));
 				}
-				list->index--;
-				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->index));
-			}
-			else if (field_type == CANCEL_FIELD)
-			{
-				form_driver(menu->form, REQ_PREV_FIELD);
-				form_highlight_active(menu->form);
-			}
-			break;
-		case KEY_RIGHT :
-			field_type = *(menu->field_types + field_index(current_field(menu->form)));
-			if (field_type == LIST_FIELD)
-			{
-				struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
-				list->index++;
-				if (list->index >= list->size)
+				else if (field_type == CANCEL_FIELD)
 				{
-					list->index = 0;
+					form_driver(menu->form, REQ_PREV_FIELD);
+					form_highlight_active(menu->form);
 				}
-				set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->index));
-			}
-			else if (field_type == OK_FIELD)
-			{
+				break;
+			case KEY_RIGHT :
+				field_type = *(menu->field_types + field_index(current_field(menu->form)));
+				if (field_type == LIST_FIELD)
+				{
+					struct Dropdown *list = (struct Dropdown *) field_userptr(current_field(menu->form));
+					list->index++;
+					if (list->index >= list->size)
+					{
+						list->index = 0;
+					}
+					set_field_buffer(current_field(menu->form), 0, *(list->item_list + list->index));
+				}
+				else if (field_type == OK_FIELD)
+				{
+					form_driver(menu->form, REQ_NEXT_FIELD);
+					form_highlight_active(menu->form);
+				}
+				break;
+			case KEY_DOWN :
 				form_driver(menu->form, REQ_NEXT_FIELD);
 				form_highlight_active(menu->form);
-			}
-			break;
-		case KEY_DOWN :
-			form_driver(menu->form, REQ_NEXT_FIELD);
-			form_highlight_active(menu->form);
-			break;
-		case KEY_UP :
-			form_driver(menu->form, REQ_PREV_FIELD);
-			form_highlight_active(menu->form);
-			break;
-		case '\n' :
-            field_type = *(menu->field_types + field_index(current_field(menu->form)));
-			switch(field_type)
-			{
-				case PATH_FIELD :
-					form_driver(menu->form, REQ_END_LINE);
-                			update_field_text(window, menu->form);
-					break;
-        		        case NUMBER_FIELD :
-					form_driver(menu->form, REQ_END_LINE);
-                			update_field_text(window, menu->form);
-					break;
-				case INDEX_FIELD :
-					form_driver(menu->form, REQ_END_LINE);
-					update_field_text(window, menu->form);
-					break;
-				case LIST_FIELD :
-					break;
-				case OK_FIELD :
-				case CANCEL_FIELD :
-					c = 'q';
-					break;
-			}
-			break;
-		default :
-			break;
+				break;
+			case KEY_UP :
+				form_driver(menu->form, REQ_PREV_FIELD);
+				form_highlight_active(menu->form);
+				break;
+			case '\n' :
+            	field_type = *(menu->field_types + field_index(current_field(menu->form)));
+				switch(field_type)
+				{
+					case PATH_FIELD :
+						form_driver(menu->form, REQ_END_LINE);
+                				update_field_text(window, menu->form);
+						break;
+        		        	case NUMBER_FIELD :
+						form_driver(menu->form, REQ_END_LINE);
+    	            			update_field_text(window, menu->form);
+						break;
+					case INDEX_FIELD :
+						form_driver(menu->form, REQ_END_LINE);
+						update_field_text(window, menu->form);
+						break;
+					case LIST_FIELD :
+						break;
+					case OK_FIELD :
+						return 1;
+					case CANCEL_FIELD :
+						return 0;
+				}
+				break;
+			default :
+				break;
+		}
 	}
 }
 

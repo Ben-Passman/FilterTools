@@ -49,7 +49,7 @@ void field_setup(FIELD **fields, enum FieldType *types, int size);
 FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns);
 void form_highlight_active(FORM *form);
 void update_field_text(WINDOW *window, FORM *form);
-void form_menu_driver(WINDOW *window, struct Form *form, int c);
+int form_menu_driver(WINDOW *window, struct Form *form);
 void free_form_struct(struct Form form_struct);
 
 #endif

@@ -54,7 +54,6 @@ int main(void)
 
 	while((c = wgetch(output_window)) != 'q')
 	{
-		struct Dropdown *d;
 		switch(c)
 		{
 			case KEY_UP :
@@ -83,23 +82,22 @@ int main(void)
 					show_panel(popup_panel);
 					update_panels();
 					doupdate();
-					while((c = wgetch(popup_window)) != 'q')
-					{
-					        form_menu_driver(popup_window, active_form, c);
-					}
+
+			        if (form_menu_driver(popup_window, active_form))
+                    {
+                        get_wave_fields(active_form, waves.selected);
+                    }
+
 					hide_panel(popup_panel);
 					update_panels();
 					doupdate();
 
-					get_wave_fields(active_form, waves.selected);
+					
 //mvwprintw(output_window, 18, 2, "%lf", waves.selected->amplitude);
 				}
 				break;
 		}
-		if (panel_hidden(popup_panel))
-		{
-			print_waves(output_window, &waves);
-		}
+        print_waves(output_window, &waves);
 	}
 	
 	// Free resources
