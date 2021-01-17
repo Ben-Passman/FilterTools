@@ -20,32 +20,6 @@
 
 #include <panel.h>
 
-void print_waves(WINDOW *window, struct WaveList *wlist)
-{
-	struct WaveForm *wave = wlist->first;
-	int row = 2;
-        wattron(window, A_REVERSE);
-    mvwprintw(window, 1, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
-	wattroff(window, A_REVERSE);
-	while(wave != NULL)
-	{
-		if (wave == wlist->selected)
-		{
-			wattron(window, A_REVERSE);
-		}
-		else
-		{
-			wattroff(window, A_REVERSE);
-		}
-		mvwprintw(window, row, 2, "SAWTOOTH   1000.000    1000.000 Hz   1000.000  1.0    1000.000  SUBTRACT");
-		wave = wave->next;
-		row++;
-	}
-	wattroff(window, A_REVERSE);
-	mvwprintw(window, row, 2, "                                                                        ");
-	wrefresh(window);
-}
-
 int main(void)
 {
 	initscr();	// Init screen, setup memory and clear screen
@@ -83,14 +57,6 @@ int main(void)
 		struct Dropdown *d;
 		switch(c)
 		{
-			case ' ' :
-				// Read field index:
-				d = (struct Dropdown *) field_userptr(active_form->fields[0]);
-				mvwprintw(output_window, 17, 2, "Form field 0 index: %d", d->index);
-				mvwprintw(output_window, 18, 2, "Selected wave %d", waves.selected->type);
-				
-
-				break;
 			case KEY_UP :
 				if (waves.first != NULL && waves.selected->previous != NULL)
 				{
@@ -126,8 +92,7 @@ int main(void)
 					doupdate();
 
 					get_wave_fields(active_form, waves.selected);
-				
-					mvwprintw(output_window, 18, 2, "%d, %lf, %lf, %lf, %lf, %d, %lf", waves.selected->type, waves.selected->amplitude, waves.selected->frequency, waves.selected->phase, waves.selected->duty, waves.selected->mode, waves.selected->dc_offset);
+//mvwprintw(output_window, 18, 2, "%lf", waves.selected->amplitude);
 				}
 				break;
 		}

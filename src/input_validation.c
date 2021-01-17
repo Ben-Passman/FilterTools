@@ -169,7 +169,7 @@ double ASCII_string_to_double(const char *string)
 	return result;
 }
 
-void sprint_SI(char *string, double number)
+void sprint_SI(char *string, double number, int width, int precision)
 {
 	int index = SI_PREFIX_OFFSET;
 	if(number != 0.0)
@@ -185,5 +185,5 @@ void sprint_SI(char *string, double number)
 			index++;
 		}
 	}
-	sprintf(string, "%8.3lf%c\n", number, SI_prefixes[index]);
+	sprintf(string, "%*.*lf%c", width, precision, number, SI_prefixes[index]);
 }

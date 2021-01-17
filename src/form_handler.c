@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SCIENTIFIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[kMGTPEZY])?"
+#define SCIENTIFIC_FIELD_REGEX "-?([0-9]*[.|,])?[0-9]+(([eE][+-]?[0-9]+)|[yzafpnumkMGTPEZY])?"
 
 // Custom types for field validation
 static FIELDTYPE *FIELD_SCIENTIFIC = NULL;
@@ -57,10 +57,6 @@ void field_setup(FIELD **fields, enum FieldType *types, int size)
 		{
 			case NUMBER_FIELD :
 				set_field_type(*(fields + i), FIELD_SCIENTIFIC);
-			case PATH_FIELD :
-				field_opts_off(*(fields + i), O_STATIC);
-				set_field_back(*(fields + i), A_UNDERLINE);
-				set_max_field(*(fields + i), 1024);	
 				break;
 			case INDEX_FIELD :
 				set_field_type(*(fields + i), FIELD_INDEX);
