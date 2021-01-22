@@ -17,7 +17,6 @@
 #include "src/ui_forms.h"
 
 #include <stdlib.h>
-
 #include <panel.h>
 
 int main(void)
@@ -28,19 +27,19 @@ int main(void)
 	curs_set(0);	// Hide cursor
 	
 	WINDOW *output_window = newwin(OUTPUT_WINDOW_SIZE, OUTPUT_WINDOW_LOCATION);
-	WINDOW *popup_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
+	WINDOW *wave_settings_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
 		
 	box(output_window, 0, 0);
-	box(popup_window, 0, 0);
+	box(wave_settings_window, 0, 0);
 	
 	PANEL *output_panel = new_panel(output_window);
-	PANEL *popup_panel = new_panel(popup_window);
-	hide_panel(popup_panel);
+	PANEL *wave_settings_panel = new_panel(wave_settings_window);
+	hide_panel(wave_settings_panel);
 	update_panels();
 	doupdate();
 
 	init_form_handler();
-	struct Form wave_form = wave_settings_setup(popup_window);
+	struct Form wave_form = wave_settings_setup(wave_settings_window);
 	struct Form *active_form = &wave_form;
 	struct WaveList waves = { NULL, NULL };
 	print_waves(output_window, &waves);
@@ -48,7 +47,7 @@ int main(void)
 	// MENU INTERFACE
 	int c = 0;
 	keypad(output_window, TRUE);
-	keypad(popup_window, TRUE);
+	keypad(wave_settings_window, TRUE);
 	post_form(active_form->form);
 	form_highlight_active(active_form->form);	
 
@@ -79,21 +78,18 @@ int main(void)
 				{
 					set_wave_fields(active_form, waves.selected);
 
-					show_panel(popup_panel);
+					show_panel(wave_settings_panel);
 					update_panels();
 					doupdate();
 
-			        if (form_menu_driver(popup_window, active_form))
-                    {
-                        get_wave_fields(active_form, waves.selected);
-                    }
+			        if (form_menu_driver(wave_settings_window, active_form))
+                    		{
+		                        get_wave_fields(active_form, waves.selected);
+                    		}
 
-					hide_panel(popup_panel);
+					hide_panel(wave_settings_panel);
 					update_panels();
 					doupdate();
-
-					
-//mvwprintw(output_window, 18, 2, "%lf", waves.selected->amplitude);
 				}
 				break;
 		}
@@ -106,7 +102,7 @@ int main(void)
 		delete_wave(&waves);
 	}
 	free_form_struct(wave_form);
-	free(popup_panel);
+	free(wave_settings_panel);
 	free(output_panel);
 
 	endwin();

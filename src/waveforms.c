@@ -136,6 +136,14 @@ void add_wave(struct WaveList *list)
 {
 	struct WaveForm *selection = list->selected;
 	struct WaveForm *new_wave = calloc(1, sizeof(struct WaveForm));
+
+	new_wave->type = SINE;
+	new_wave->amplitude = 1.0;
+	new_wave->frequency = 1000.0;
+	new_wave->phase = 0.0;
+	new_wave->duty = 0.0;
+	new_wave->mode = ADD;
+	new_wave->dc_offset = 0.0;
 	new_wave->next = NULL;
 	new_wave->previous = NULL;
 
