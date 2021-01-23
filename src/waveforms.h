@@ -37,10 +37,6 @@ struct WaveList {
     struct WaveForm *selected;
 };
 
-long double saw_wave (const long double t, const struct WaveForm *wave);
-long double triangle_wave (const long double t, const struct WaveForm *wave);
-long double square_wave (const long double t, const struct WaveForm *wave);
-long double sine_wave (const long double t, const struct WaveForm *wave);
 void generate_signal (const int number_of_samples, const long double sample_rate);
 
 //move_wave_up { if previous != NULL }

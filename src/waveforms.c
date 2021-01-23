@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+typedef long double (WaveGenerator)(const long double t, const struct WaveForm *wave);
+
 long double saw_wave(const long double t, const struct WaveForm *wave)
 {
 	long double delay = wave->phase / (wave->frequency * 360);
@@ -75,31 +77,66 @@ long double square_wave(const long double t, const struct WaveForm *wave)
 long double sine_wave(const long double t, const struct WaveForm *wave)
 {
 	long double w = acosl(-1) * (2.0L * wave->frequency * t + wave->phase / 180.0);
-	long double outputPoint = wave->amplitude * sinl(w) + wave->dc_offset;
+	
+	return wave->amplitude * sinl(w) + wave->dc_offset;
+}
 
-	return outputPoint;
+long double cosine_wave(const long double t, const struct WaveForm *wave)
+{
+	long double w = acosl(-1) * (2.0L * wave->frequency * t + wave->phase / 180.0);
+	
+	return wave->amplitude * cosl(w) + wave->dc_offset;
 }
 
 int export_wave (struct WaveList *list)
 {
-	FILE *fp;
-	fp = fopen("Test Data.csv", "w");
+	if (list->first == NULL)
+	{
+		printf("Wave list is empty.");
+		return 0;
+	}
 
+	FILE *fp;
+	fp = fopen("Test Data.csv", "w");	
 	if (fp != NULL)
 	{
-		long double T = 1.0 / list->sample_frequency;
-		struct WaveForm *last = list->first;
+		WaveGenerator *generate[5];
+		generate[SINE] = &sine_wave;
+		generate[COSINE] = &cosine_wave;
+		generate[SAWTOOTH] = &saw_wave;
+		generate[TRIANGLE] = &triangle_wave;
+		generate[SQUARE] = &square_wave;
 
-		while (last->next != NULL)
+		long double T = 1.0 / list->sample_frequency;
+		struct WaveForm *selected_wave = list->first;
+
+		// Select last wave
+		while (selected_wave->next != NULL)
 		{
-			last = last->next;
+			selected_wave = selected_wave->next;
 		}		
 
-		for (long double t = 0; t <= list->sample_count * T; t += T)
+		long double *buffer = malloc(list->sample_count * sizeof(long double));
+		for (int i = 0; i < list->sample_count; i++)
 		{
-			fprintf(fp, "%Lf, %Lf, %Lf, %Lf, %Lf\n", t, sine_wave(t, last), saw_wave(t, last), triangle_wave(t, last), square_wave(t, last));
-			
+			*(buffer + i) = generate[selected_wave->type](i * T, selected_wave); // WAVE_TYPE
 		}
+
+		while (selected_wave->previous != NULL)
+		{
+			for (int i = 0; i < list->sample_count; i++)
+			{
+				*(buffer + i) += generate[selected_wave->previous->type](i * T, selected_wave->previous);
+			}
+			selected_wave = selected_wave->previous;
+		}
+
+		for (int i = 0; i < list->sample_count; i++)
+		{
+			fprintf(fp, "%Lf, %Lf\n", i * T, *(buffer + i));
+		}
+
+		free(buffer);
 		fclose(fp);
 		return 1;
 	}
