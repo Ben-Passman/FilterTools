@@ -41,7 +41,7 @@ int main(void)
 	init_form_handler();
 	struct Form wave_form = wave_settings_setup(wave_settings_window);
 	struct Form *active_form = &wave_form;
-	struct WaveList waves = { NULL, NULL };
+	struct WaveList waves = { 1000, 48000.0, NULL, NULL };
 	print_waves(output_window, &waves);
 
 	// MENU INTERFACE
@@ -73,6 +73,12 @@ int main(void)
 			case 'd' :
 				delete_wave(&waves);
 				break;
+			case 'e' :
+				if (waves.first != NULL)
+				{	
+					export_wave(&waves);
+				}
+				break;
 			case '\n' :
 				if (waves.selected != NULL)
 				{
@@ -83,13 +89,13 @@ int main(void)
 					doupdate();
 
 			        if (form_menu_driver(wave_settings_window, active_form))
-                    		{
-		                        get_wave_fields(active_form, waves.selected);
-                    		}
+				{
+					get_wave_fields(active_form, waves.selected);
+				}
 
-					hide_panel(wave_settings_panel);
-					update_panels();
-					doupdate();
+				hide_panel(wave_settings_panel);
+				update_panels();
+				doupdate();
 				}
 				break;
 		}

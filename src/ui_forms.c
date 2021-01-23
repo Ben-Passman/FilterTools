@@ -29,6 +29,7 @@ struct Form wave_settings_setup (WINDOW *window)
 	mvwprintw(window, 6, 4, "Frequency:");
 	mvwprintw(window, 6, 36, "Hz");
 	mvwprintw(window, 8, 4, "Phase:");
+	mvwprintw(window, 8, 36, "degrees");
 	mvwprintw(window, 10, 4, "Duty:");
 	mvwprintw(window, 12, 4, "Mode:");
 	mvwprintw(window, 14, 4, "DC Offset:");
@@ -121,11 +122,12 @@ void get_wave_fields(const struct Form *form, struct WaveForm *wave)
 void print_waves(WINDOW *window, struct WaveList *wlist)
 {
     wattron(window, A_REVERSE);
-    mvwprintw(window, 1, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
+    mvwprintw(window, 1, 2, "Samples: %d Sampling Frequency: %f", wlist->sample_count, wlist->sample_frequency);
+    mvwprintw(window, 2, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
   
     struct WaveForm *wave = wlist->first;
 	char wave_data[72];
-    int row = 2;
+    int row = 3;
     while(wave != NULL)
 	{
 		if (wave == wlist->selected)
