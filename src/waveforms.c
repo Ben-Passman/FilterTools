@@ -249,3 +249,79 @@ void delete_wave(struct WaveList *list)
 		free(old_wave);
 	}
 }
+
+void move_selected_wave_up (struct WaveList *list)
+{
+	struct WaveForm *target = list->selected;
+	
+	if (target != NULL && target->previous != NULL)
+	{
+		struct WaveForm *b = target->previous;
+		struct WaveForm *c = target->next;
+		
+		if (c != NULL)
+		{	
+			b->next = c;
+			c->previous = b;
+		}
+		else
+		{
+			b->next = NULL;
+		}
+		
+		target->next = b;
+
+		if (b->previous != NULL)
+		{
+			struct WaveForm *a = b->previous;
+
+			target->previous = a;
+			a->next = target;
+			b->previous = target;
+		}
+		else
+		{
+			target->previous = NULL;
+			b->previous = target;
+			list->first = target;
+		}
+	}
+}
+
+void move_selected_wave_down (struct WaveList *list)
+{
+	struct WaveForm *target = list->selected;
+
+	if (target != NULL && target->next != NULL)
+	{
+		struct WaveForm *a = target->previous;
+		struct WaveForm *b = target->next;
+
+		if (a != NULL)
+		{
+			a->next = b;
+			b->previous = a;
+		}
+		else
+		{
+			b->previous = NULL;
+			list->first = b;
+		}
+
+		target->previous = b;
+
+		if (b->next != NULL)
+		{
+			struct WaveForm *c = b->next;
+
+			target->next = c;
+			b->next = target;
+			c->previous = target;
+		}
+		else
+		{
+			target->next = NULL;
+			b->next = target;
+		}
+	}
+}

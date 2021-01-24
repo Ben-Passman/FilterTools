@@ -74,6 +74,12 @@ int main(void)
 			case 'd' :
 				delete_wave(&waves);
 				break;
+			case 'w' :
+				move_selected_wave_up(&waves);
+				break;
+			case 's' :
+				move_selected_wave_down(&waves);
+				break;
 			case 'e' :
 				if (waves.first != NULL)
 				{	
