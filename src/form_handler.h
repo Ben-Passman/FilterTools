@@ -17,6 +17,8 @@
 
 #include <form.h>
 
+#define FORM_PATH_MAX 512
+
 enum FieldType { LABEL_FIELD, PATH_FIELD, INDEX_FIELD, NUMBER_FIELD, LIST_FIELD, OK_FIELD, CANCEL_FIELD };
 
 struct Form {

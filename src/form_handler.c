@@ -56,6 +56,10 @@ void field_setup(FIELD **fields, enum FieldType *types, int size)
 		field_opts_off(*(fields + i), O_AUTOSKIP | O_BLANK);
 		switch (*(types + i))
 		{
+            case PATH_FIELD :
+                field_opts_off(*(fields + i), O_STATIC);
+                set_max_field(*(fields + i), FORM_PATH_MAX);
+                break;
 			case NUMBER_FIELD :
 				set_field_type(*(fields + i), FIELD_SCIENTIFIC);
 				break;
@@ -73,7 +77,7 @@ FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns)
     FORM *form = new_form(fields);
 	scale_form(form, &rows, &columns);
 	set_form_win(form, window);
-	set_form_sub(form, derwin(window, rows, columns, 2, 15));
+	set_form_sub(form, derwin(window, rows, columns, 2, 25));
 	form_opts_off(form, O_BS_OVERLOAD); // Prevents backspace moving into previous field
 
 	return form;

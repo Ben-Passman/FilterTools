@@ -34,6 +34,7 @@ struct WaveForm {
 };
 
 struct WaveList {
+    char *export_path;
     int sample_count;
     double sample_frequency;
     struct WaveForm *first;

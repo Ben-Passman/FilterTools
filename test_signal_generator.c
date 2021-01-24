@@ -14,7 +14,8 @@
  ************************************************************************************************ */
 
 #include "test_signal_generator.h"
-#include "src/main_menu_form.h"
+#include "src/main_settings_form.h"
+#include "src/wave_settings_form.h"
 
 #include <stdlib.h>
 #include <panel.h>
@@ -28,29 +29,46 @@ int main(void)
 	
 	WINDOW *output_window = newwin(OUTPUT_WINDOW_SIZE, OUTPUT_WINDOW_LOCATION);
 	WINDOW *wave_settings_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);
-		
+	WINDOW *settings_window = newwin(POPUP_WINDOW_SIZE, POPUP_WINDOW_LOCATION);	
+
 	box(output_window, 0, 0);
 	box(wave_settings_window, 0, 0);
+	box(settings_window, 0, 0);
 	
 	PANEL *output_panel = new_panel(output_window);
 	PANEL *wave_settings_panel = new_panel(wave_settings_window);
+	PANEL *settings_panel = new_panel(settings_window);
 	hide_panel(wave_settings_panel);
+	hide_panel(settings_panel);
 	update_panels();
 	doupdate();
 
 	init_custom_fields();
     
+    char export_path[FORM_PATH_MAX];
+    export_path[0] = '/';
+    export_path[1] = '\0';
+    
 	struct Form wave_form = wave_settings_setup(wave_settings_window);
-	struct Form *active_form = &wave_form;
-	struct WaveList waves = { 1000, 48000.0, NULL, NULL };
+    struct Form main_settings_form = main_settings_setup(settings_window);
+	struct WaveList waves = {
+        .export_path = export_path,
+        .sample_count = 1000,
+        .sample_frequency = 48000.00,
+        .first = NULL,
+        .selected = NULL
+    };
 	print_waves(output_window, &waves);
 
 	// MENU INTERFACE
 	int c = 0;
 	keypad(output_window, TRUE);
 	keypad(wave_settings_window, TRUE);
-	post_form(active_form->form);
-	form_highlight_active(active_form->form);	
+    keypad(settings_window, TRUE);
+	post_form(wave_form.form);
+    post_form(main_settings_form.form);
+	form_highlight_active(wave_form.form);	
+    form_highlight_active(main_settings_form.form);
 
 	while((c = wgetch(output_window)) != 'q')
 	{
@@ -86,18 +104,34 @@ int main(void)
 					export_wave(&waves);
 				}
 				break;
+			case 'p' :
+                set_main_settings_fields(&main_settings_form, &waves);
+                
+				show_panel(settings_panel);
+				update_panels();
+				doupdate();
+                
+                if (form_menu_driver(settings_window, &main_settings_form))
+                {
+                    get_main_settings_fields(&main_settings_form, &waves);
+                }
+
+				hide_panel(settings_panel);
+				update_panels();
+				doupdate();
+				break;
 			case '\n' :
 				if (waves.selected != NULL)
 				{
-					set_wave_fields(active_form, waves.selected);
+					set_wave_fields(&wave_form, waves.selected);
 
 					show_panel(wave_settings_panel);
 					update_panels();
 					doupdate();
 
-			        if (form_menu_driver(wave_settings_window, active_form))
+			        if (form_menu_driver(wave_settings_window, &wave_form))
 				{
-					get_wave_fields(active_form, waves.selected);
+					get_wave_fields(&wave_form, waves.selected);
 				}
 
 				hide_panel(wave_settings_panel);
@@ -115,6 +149,7 @@ int main(void)
 		delete_wave(&waves);
 	}
 	free_form_struct(wave_form);
+    free_form_struct(main_settings_form);
 	free(wave_settings_panel);
 	free(output_panel);
 

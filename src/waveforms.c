@@ -277,14 +277,13 @@ void move_selected_wave_up (struct WaveList *list)
 
 			target->previous = a;
 			a->next = target;
-			b->previous = target;
 		}
 		else
 		{
 			target->previous = NULL;
-			b->previous = target;
 			list->first = target;
 		}
+		b->previous = target;
 	}
 }
 
@@ -315,13 +314,12 @@ void move_selected_wave_down (struct WaveList *list)
 			struct WaveForm *c = b->next;
 
 			target->next = c;
-			b->next = target;
 			c->previous = target;
 		}
 		else
 		{
 			target->next = NULL;
-			b->next = target;
 		}
+		b->next = target;
 	}
 }

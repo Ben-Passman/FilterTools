@@ -1,13 +1,13 @@
-#ifndef MAIN_MENU_FORM
-#define MAIN_MENU_FORM
+#ifndef WAVE_SETTINGS_FORM
+#define WAVE_SETTINGS_FORM
 
 /************************************************************************************************
- * FilterTools/main_menu_form.h
+ * FilterTools/wave_settings_form.h
  * 
  * Author	: Ben Passman
  * Created	: 16/1/2021
  * 
- * Description	: Main menu form layout and access functions
+ * Description	: Ncurses form layout and access functions for wave settings
  *
  * Revision History:
  * Date         Author      Rev     Notes

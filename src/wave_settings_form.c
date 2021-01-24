@@ -1,10 +1,10 @@
 /************************************************************************************************
- * FilterTools/main_menu_form.c
+ * FilterTools/wave_settings_form.c
  * 
  * Author	: Ben Passman
  * Created	: 16/1/2021
  * 
- * Description	: Main menu form layouts and access functions
+ * Description	: Ncurses form layout and access functions for wave settings
  *
  * Revision History:
  * Date         Author      Rev     Notes
@@ -12,7 +12,7 @@
  *
  ************************************************************************************************ */
 
-#include "main_menu_form.h"
+#include "wave_settings_form.h"
 #include "input_validation.h"
 #include <stdlib.h>
 
