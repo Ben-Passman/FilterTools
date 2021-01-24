@@ -16,7 +16,7 @@
  ************************************************************************************************ */
 
 enum WaveType { SINE, COSINE, SAWTOOTH, TRIANGLE, SQUARE };
-enum WaveMode { ADD, SUBTRACT, MULTIPLY, DIVIDE, AM, FM };
+enum WaveMode { ADD, SUBTRACT, AM, DIVIDE, FM };
 
 struct WaveForm {
     enum WaveType type;

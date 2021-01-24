@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 static const char *wave_types[] = { "Sine    ", "Cosine  ", "Sawtooth", "Triangle", "Square  " };
-static const char *wave_modes[] = { "Add     ", "Subtract", "Multiply", "Divide  ", "AM      ", "FM      " };
+static const char *wave_modes[] = { "Add     ", "Subtract", "AM      ", "Divide  ",  "FM      " };
 static struct Dropdown settings_dropdowns[] = { 
 	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
 	{ 0, &wave_modes[0], sizeof wave_modes / sizeof wave_modes[0] }
