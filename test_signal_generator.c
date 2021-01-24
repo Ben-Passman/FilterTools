@@ -152,6 +152,7 @@ int main(void)
     free_form_struct(main_settings_form);
 	free(wave_settings_panel);
 	free(output_panel);
+    free(settings_panel);
 
 	endwin();
 	
