@@ -21,7 +21,7 @@
 typedef long double (WaveGenerator)(const long double t, const struct WaveForm *wave);
 typedef void (WaveOperation)(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output);
 
-long double saw_wave(const long double t, const struct WaveForm *wave)
+static long double saw_wave(const long double t, const struct WaveForm *wave)
 {
 	long double delay = wave->phase / (wave->frequency * 360);
 	long double output_point = 2.0L * wave->amplitude * wave->frequency * (t + delay) + wave->amplitude;
@@ -34,7 +34,7 @@ long double saw_wave(const long double t, const struct WaveForm *wave)
 	return output_point + wave->dc_offset;
 }
 
-long double triangle_wave(const long double t, const struct WaveForm *wave)
+static long double triangle_wave(const long double t, const struct WaveForm *wave)
 {
 	long double delay = wave->phase / (wave->frequency * 360);
 	long double output_point = 4.0L * wave->amplitude * wave->frequency * (t + delay);
@@ -55,7 +55,7 @@ long double triangle_wave(const long double t, const struct WaveForm *wave)
 	return output_point + wave->dc_offset;
 }
 
-long double square_wave(const long double t, const struct WaveForm *wave)
+static long double square_wave(const long double t, const struct WaveForm *wave)
 {
 	long double T = 1 / wave->frequency;
 	long double delay = T * wave->phase / 360;
@@ -75,41 +75,41 @@ long double square_wave(const long double t, const struct WaveForm *wave)
 	return output_point + wave->dc_offset;
 }
 
-long double sine_wave(const long double t, const struct WaveForm *wave)
+static long double sine_wave(const long double t, const struct WaveForm *wave)
 {
 	long double w = acosl(-1) * (2.0L * wave->frequency * t + wave->phase / 180.0);
 	
 	return wave->amplitude * sinl(w) + wave->dc_offset;
 }
 
-long double cosine_wave(const long double t, const struct WaveForm *wave)
+static long double cosine_wave(const long double t, const struct WaveForm *wave)
 {
 	long double w = acosl(-1) * (2.0L * wave->frequency * t + wave->phase / 180.0);
 	
 	return wave->amplitude * cosl(w) + wave->dc_offset;
 }
 
-void wave_add(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
+static void wave_add(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
 {
 	*output += f(t, wave);
 }
 
-void wave_subtract(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
+static void wave_subtract(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
 {
 	*output -= f(t, wave);
 }
 
-void wave_AM(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
+static void wave_AM(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
 {
 	*output *= f(t, wave);
 }
 
-void wave_divide(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
+static void wave_divide(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
 {
 	*output /= f(t, wave);
 }
 
-void wave_FM(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
+static void wave_FM(WaveGenerator *f, const long double t, const struct WaveForm *wave, long double *output)
 {
 	struct WaveForm temp = *wave;
 	temp.frequency *= *output;
@@ -145,7 +145,6 @@ int export_wave (struct WaveList *list)
 		long double T = 1.0 / list->sample_frequency;
 		struct WaveForm *selected_wave = list->first;
 
-		// Select last wave
 		while (selected_wave->next != NULL)
 		{
 			selected_wave = selected_wave->next;
@@ -157,19 +156,18 @@ int export_wave (struct WaveList *list)
 			*(buffer + i) = generate[selected_wave->type](i * T, selected_wave); // WAVE_TYPE
 		}
 
+		// Waves combined from bottom of list up.
 		selected_wave = selected_wave->previous;
 		while (selected_wave != NULL)
 		{
 			for (int i = 0; i < list->sample_count; i++)
 			{
-				// selected_wave->next->mode selects operation
-				//*(buffer + i) += generate[selected_wave->type](i * T, selected_wave);
-				//wave_AM(generate[selected_wave->type], i * T, selected_wave, buffer + i);
 				combine[selected_wave->next->mode](generate[selected_wave->type], i * T, selected_wave, buffer + i);
 			}
 			selected_wave = selected_wave->previous;
 		}
 
+		fprintf(fp, "Time (s), Combined Signal\n");
 		for (int i = 0; i < list->sample_count; i++)
 		{
 			fprintf(fp, "%Lf, %Lf\n", i * T, *(buffer + i));

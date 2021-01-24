@@ -13,6 +13,7 @@
  ************************************************************************************************ */
 
 #include "form_handler.h"
+#include "input_validation.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -41,13 +42,13 @@ static bool is_integer_char(int c, const void *p)
     return ((c >= '0') && (c <= '9')) ? true : false;
 }
 
-void init_form_handler(void)
+void init_custom_fields(void)
 {
     FIELD_SCIENTIFIC = new_fieldtype(&is_valid_number_field, NULL);
     FIELD_INDEX = new_fieldtype(NULL, &is_integer_char);
 }
 
-// General setup functions
+// Setup functions
 void field_setup(FIELD **fields, enum FieldType *types, int size)
 {
     for (int i = 0; i < size; i++)
@@ -78,17 +79,8 @@ FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns)
 	return form;
 }
 
-// Form interface functions
-void form_highlight_active(FORM *form)
-{
-	for(int i = 0; i < form->maxfield; i++)
-	{
-		set_field_back(form->field[i], A_NORMAL);
-	}
-	set_field_back(current_field(form), A_REVERSE);
-}
-
-void update_field_text(WINDOW *window, FORM *form)
+// Interface functions
+static void update_field_text(WINDOW *window, FORM *form)
 {
 	int c = 0;
 	curs_set(1);
@@ -123,6 +115,15 @@ void update_field_text(WINDOW *window, FORM *form)
 	}
 	form_driver(form, REQ_VALIDATION);
 	curs_set(0);
+}
+
+void form_highlight_active(FORM *form)
+{
+	for(int i = 0; i < form->maxfield; i++)
+	{
+		set_field_back(form->field[i], A_NORMAL);
+	}
+	set_field_back(current_field(form), A_REVERSE);
 }
 
 int form_menu_driver(WINDOW* window, struct Form *menu)

@@ -14,7 +14,7 @@
  ************************************************************************************************ */
 
 #include "test_signal_generator.h"
-#include "src/ui_forms.h"
+#include "src/main_menu_form.h"
 
 #include <stdlib.h>
 #include <panel.h>
@@ -38,7 +38,8 @@ int main(void)
 	update_panels();
 	doupdate();
 
-	init_form_handler();
+	init_custom_fields();
+    
 	struct Form wave_form = wave_settings_setup(wave_settings_window);
 	struct Form *active_form = &wave_form;
 	struct WaveList waves = { 1000, 48000.0, NULL, NULL };

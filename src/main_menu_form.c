@@ -1,10 +1,10 @@
 /************************************************************************************************
- * FilterTools/ui_forms.c
+ * FilterTools/main_menu_form.c
  * 
  * Author	: Ben Passman
  * Created	: 16/1/2021
  * 
- * Description	: Form layouts and access functions
+ * Description	: Main menu form layouts and access functions
  *
  * Revision History:
  * Date         Author      Rev     Notes
@@ -12,11 +12,12 @@
  *
  ************************************************************************************************ */
 
-#include "ui_forms.h"
+#include "main_menu_form.h"
+#include "input_validation.h"
 #include <stdlib.h>
 
-static const char *wave_types[] = { "Sine    ", "Cosine  ", "Sawtooth", "Triangle", "Square  " };
-static const char *wave_modes[] = { "Add     ", "Subtract", "AM      ", "Divide  ",  "FM      " };
+static const char *wave_types[] = WAVETYPE_MENU;
+static const char *wave_modes[] = WAVEMODE_MENU;
 static struct Dropdown settings_dropdowns[] = { 
 	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
 	{ 0, &wave_modes[0], sizeof wave_modes / sizeof wave_modes[0] }
@@ -123,7 +124,7 @@ void print_waves(WINDOW *window, struct WaveList *wlist)
 {
     wattron(window, A_REVERSE);
     mvwprintw(window, 1, 2, "Samples: %d Sampling Frequency: %f", wlist->sample_count, wlist->sample_frequency);
-    mvwprintw(window, 2, 2, "Shape:     Amplitude:  Frequency:    Phase:    Duty:  DC Offset:        ");
+    mvwprintw(window, 2, 2, "Shape:     Amplitude:  Frequency:  Phase:    Duty:     DC Offset:         ");
   
     struct WaveForm *wave = wlist->first;
 	char wave_data[72];
@@ -140,12 +141,20 @@ void print_waves(WINDOW *window, struct WaveList *wlist)
 		}
 		
         sprint_SI(&wave_data[0], wave->amplitude, 8, 3);
-        sprint_SI(&wave_data[9], wave->frequency, 8, 3);
-        sprint_SI(&wave_data[18], wave->phase, 8, 3);
-        sprint_SI(&wave_data[27], wave->duty, 8, 3);
-        sprint_SI(&wave_data[36], wave->dc_offset, 8, 3);
+        wave_data[9] = ' ';
+        wave_data[10] = ' ';
+        wave_data[11] = ' ';
+        sprint_SI(&wave_data[12], wave->frequency, 8, 3);
+        wave_data[21] = ' ';
+        wave_data[22] = ' ';
+        wave_data[23] = ' ';
+        sprint_SI(&wave_data[24], wave->phase, 8, 3);
+        wave_data[33] = ' ';
+        sprint_SI(&wave_data[34], wave->duty, 8, 3);
+        wave_data[43] = ' ';
+        sprint_SI(&wave_data[44], wave->dc_offset, 8, 3);
 		
-        mvwprintw(window, row, 2, "%s %s %s",
+        mvwprintw(window, row, 2, "%s  %s   %s",
             wave_types[wave->type],
             &wave_data[0],
             wave_modes[wave->mode]

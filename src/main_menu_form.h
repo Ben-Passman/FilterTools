@@ -1,13 +1,13 @@
-#ifndef UI_FORMS
-#define UI_FORMS
+#ifndef MAIN_MENU_FORM
+#define MAIN_MENU_FORM
 
 /************************************************************************************************
- * FilterTools/ui_forms.h
+ * FilterTools/main_menu_form.h
  * 
  * Author	: Ben Passman
  * Created	: 16/1/2021
  * 
- * Description	: Form layouts and access functions
+ * Description	: Main menu form layout and access functions
  *
  * Revision History:
  * Date         Author      Rev     Notes

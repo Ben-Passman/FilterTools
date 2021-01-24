@@ -15,8 +15,6 @@
  *
  ************************************************************************************************ */
 
-#include "input_validation.h"
-
 #include <form.h>
 
 enum FieldType { LABEL_FIELD, PATH_FIELD, INDEX_FIELD, NUMBER_FIELD, LIST_FIELD, OK_FIELD, CANCEL_FIELD };
@@ -44,11 +42,10 @@ struct Dropdown
 	const int size;
 };
 
-void init_form_handler(void);
+void init_custom_fields(void);
 void field_setup(FIELD **fields, enum FieldType *types, int size);
 FORM *form_setup(WINDOW *window, FIELD **fields, int rows, int columns);
 void form_highlight_active(FORM *form);
-void update_field_text(WINDOW *window, FORM *form);
 int form_menu_driver(WINDOW *window, struct Form *form);
 void free_form_struct(struct Form form_struct);
 
