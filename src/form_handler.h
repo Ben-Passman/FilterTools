@@ -40,7 +40,7 @@ struct FormTemplate {
 struct Dropdown
 {
 	int index;
-	const char **item_list;
+	const char *const *const item_list;
 	const int size;
 };
 

@@ -16,8 +16,8 @@
 #include "input_validation.h"
 #include <stdlib.h>
 
-static const char *wave_types[] = WAVETYPE_MENU;
-static const char *wave_modes[] = WAVEMODE_MENU;
+const char *const wave_types[] = WAVETYPE_MENU; // GLOBAL
+const char *const wave_modes[] = WAVEMODE_MENU; // GLOBAL
 static struct Dropdown settings_dropdowns[] = { 
 	{ 0, &wave_types[0], sizeof wave_types / sizeof wave_types[0] },
 	{ 0, &wave_modes[0], sizeof wave_modes / sizeof wave_modes[0] }
@@ -118,51 +118,4 @@ void get_wave_fields(const struct Form *form, struct WaveForm *wave)
     
     strip_whitespace(field_buffer(form->fields[6], 0), temp);
     wave->dc_offset = ASCII_string_to_double(temp);
-}
-
-void print_waves(WINDOW *window, struct WaveList *wlist)
-{
-    wattron(window, A_REVERSE);
-    mvwprintw(window, 1, 2, "Samples: %d Sampling Frequency: %f", wlist->sample_count, wlist->sample_frequency);
-    mvwprintw(window, 2, 2, "Shape:     Amplitude:  Frequency:  Phase:    Duty:     DC Offset:         ");
-  
-    struct WaveForm *wave = wlist->first;
-	char wave_data[72];
-    int row = 3;
-    while(wave != NULL)
-	{
-		if (wave == wlist->selected)
-		{
-			wattron(window, A_REVERSE);
-		}
-		else
-		{
-			wattroff(window, A_REVERSE);
-		}
-		
-        sprint_SI(&wave_data[0], wave->amplitude, 8, 3);
-        wave_data[9] = ' ';
-        wave_data[10] = ' ';
-        wave_data[11] = ' ';
-        sprint_SI(&wave_data[12], wave->frequency, 8, 3);
-        wave_data[21] = ' ';
-        wave_data[22] = ' ';
-        wave_data[23] = ' ';
-        sprint_SI(&wave_data[24], wave->phase, 8, 3);
-        wave_data[33] = ' ';
-        sprint_SI(&wave_data[34], wave->duty, 8, 3);
-        wave_data[43] = ' ';
-        sprint_SI(&wave_data[44], wave->dc_offset, 8, 3);
-		
-        mvwprintw(window, row, 2, "%s  %s   %s",
-            wave_types[wave->type],
-            &wave_data[0],
-            wave_modes[wave->mode]
-        );
-		wave = wave->next;
-		row++;
-	}
-	wattroff(window, A_REVERSE);
-	mvwprintw(window, row, 2, "                                                                        ");
-	wrefresh(window);
 }

@@ -43,7 +43,7 @@ struct WaveList {
 
 void add_wave (struct WaveList *list);
 void delete_wave (struct WaveList *list);
-int export_wave (struct WaveList *list); // Print null at end
+int export_wave (struct WaveList *list);
 void move_selected_wave_up (struct WaveList *list);
 void move_selected_wave_down (struct WaveList *list); 
 

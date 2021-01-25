@@ -7,7 +7,7 @@ SRCDIR	= src
 INCLUDE	= include
 OBJDIR	= build
 
-OBJS	= $(addprefix $(OBJDIR)/, waveforms.o input_validation.o form_handler.o main_settings_form.o wave_settings_form.o test_signal_generator.o)
+OBJS	= $(addprefix $(OBJDIR)/, waveforms.o input_validation.o form_handler.o main_menu.o main_settings_form.o wave_settings_form.o test_signal_generator.o)
 
 CFLAGS	= -g -O0 -Wall -Wextra -pedantic
 LDLIBS	= -lm -lpanel -lmenu -lform -lncurses
