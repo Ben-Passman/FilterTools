@@ -12,7 +12,7 @@
  *
  ************************************************************************************************ */
 
-#include "test_signal_generator.h"
+#include "signal-generator.h"
 #include "src/main_menu.h"
 
 int main(void)
