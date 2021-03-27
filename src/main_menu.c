@@ -131,6 +131,8 @@ void main_menu_refresh()
 		wave = wave->next;
 		row++;
 	}
+    wattron(output_window, A_REVERSE);
+    	mvwprintw(output_window, 18, 2, "a-add  d-delete  w-move up  s-move down  e-export  p-settings  q-quit     ");
 	wattroff(output_window, A_REVERSE);
 	mvwprintw(output_window, row, 2, "                                                                        ");
 	wrefresh(output_window);
