@@ -1,11 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <regex.h>
 #include <math.h>
 #include <complex.h>
 
 #define BUFFER_SIZE 32
 #define ASCII_TO_INT(x) (x - 48)
 #define IS_ASCII_INT(x) (x >= 48 && x <= 57)
+
+// Pattern for decimal numbers: "-\\?[0-9 ]*[.,][0-9 ]*"
+int regex_test(char *pattern, char *string)
+{
+    regex_t re;
+
+    if (regcomp(&re, pattern, 0) != 0)
+    {
+	printf("Regex failed to compile.\n");
+	regfree(&re);
+	return 0;
+    }
+
+    size_t nmatches = 2;
+    regmatch_t matches[2];
+    int status = regexec(&re, string, nmatches, matches, 0);
+    printf("Test string: %s : %d -> %d %d\n", string, status, matches[0].rm_so, matches[0].rm_eo);
+
+    regfree(&re);
+
+    return 1;
+}
 
 double complex nth_root (int n, int N)
 {
@@ -26,7 +49,7 @@ void DFT (double complex *time, double complex *freq, int N)
 	}
 }
 
-int main (int argc, char *argv)
+int main (int argc, char **argv)
 {
 	FILE *fp;
 	char buff[BUFFER_SIZE];
@@ -34,6 +57,16 @@ int main (int argc, char *argv)
 	double complex *data;
 	double complex *freq;
 
+    if (argc < 3)
+    {
+        printf("Skipping regex test (dft <pattern> <test string> to test regex)\n");
+    }
+    else
+    {
+        regex_test(argv[1], argv[2]);
+        
+    }
+    
 	fp = fopen("../signal-generator/Test Data.csv", "r");
 	if (fp != NULL)
 	{	
@@ -90,14 +123,15 @@ int main (int argc, char *argv)
 
 	DFT(data, freq, size);
 
-	fp = fopen("Test Data.csv", "w");
+	fp = fopen("Test DFT.csv", "w");
 	if (fp != NULL)
 	{
 		double fs = 1000.0;
-		fprintf(fp, "Index, Magnitude, Phase\n");
+		fprintf(fp, "Index, Real, Imaginary\n");
 		for (int i = 0; i < size; i++)
 		{
 			fprintf(fp, "%lf, %lf, %lf\n", i * fs / 100, creal(*(freq + i)), cimag(*(freq + i)));
+            //fprintf(fp, "%lf, %lf, %lf\n", i * fs / 100, cabs(*(freq + i)), carg(*(freq + i)));
 		}
 	}
 	fclose(fp);
