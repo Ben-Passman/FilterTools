@@ -32,109 +32,126 @@ int regex_test(char *pattern, char *string)
 
 double complex nth_root (int n, int N)
 {
-	//double pi = acos(-1);
-	double angle = 2.0f * M_PI * n / N;
-	return cos(angle) - sin(angle) * I;
+    //double pi = acos(-1);
+    double angle = 2.0f * M_PI * n / N;
+    return cos(angle) - sin(angle) * I;
 }
 
 void DFT (double complex *time, double complex *freq, int N)
 {	
-	for (int k = 0; k < N; k++)
+    for (int k = 0; k < N; k++)
+    {
+	*(freq + k) = 0.0 + 0.0 * I;
+	for (int n = 0; n < N; n++)
 	{
-		*(freq + k) = 0.0 + 0.0 * I;
-		for (int n = 0; n < N; n++)
-		{
-			*(freq + k) += *(time + n) * nth_root(n*k, N);
-		}
+	    *(freq + k) += *(time + n) * nth_root(n*k, N);
 	}
+    }
 }
 
-int main (int argc, char **argv)
+int alloc_csv_data(const char *filepath, double complex **data)
 {
-	FILE *fp;
-	char buff[BUFFER_SIZE];
-	int size = 0;
-	double complex *data;
-	double complex *freq;
-
-    if (argc < 3)
+    FILE *fp = fopen(filepath, "r");
+    if(fp == NULL)
     {
-        printf("Skipping regex test (dft <pattern> <test string> to test regex)\n");
-    }
-    else
-    {
-        regex_test(argv[1], argv[2]);
-        
+	return 0;
     }
     
-	fp = fopen("../signal-generator/Test Data.csv", "r");
-	if (fp != NULL)
-	{	
-		while (fgets(buff, BUFFER_SIZE, fp))
-		{
-			size++;
-		}
-	
-		data = calloc(size - 1, sizeof(double complex));
-		freq = calloc(size - 1, sizeof(double complex));
-		fseek(fp, 0, 0);
-		size = 0;
-		fgets(buff, BUFFER_SIZE, fp);
-	
-		while (fgets(buff, BUFFER_SIZE, fp))
-		{
-			int index = 0;
-			double sign = 1.0f;
-			while (index < BUFFER_SIZE && buff[index] != ' ')
-			{
-				index++;
-			}
-			index++;
+    char buff[BUFFER_SIZE];
+    int size = 0;
+    
+    while(fgets(buff, BUFFER_SIZE, fp))
+    {
+	size++;
+    }
 
-			if (buff[index] == '-')
-			{
-				sign = -1.0f;
-				index++;
-			}
+    *data = calloc(size - 1, sizeof(double complex));
+    fseek(fp, 0, 0);
+    size = 0;
+    fgets(buff, BUFFER_SIZE, fp);
 
-			double num = 0.0f;
-			while (index < BUFFER_SIZE && IS_ASCII_INT(buff[index]) && buff[index] != '\n')
-			{
-				num *= 10.0f;
-				num += ASCII_TO_INT(buff[index]);
-				index++;
-			}
-			index++;
-			double frac = 0.0f;
-			double scale = 1.0f;
-			while (index < BUFFER_SIZE && IS_ASCII_INT(buff[index]) && buff[index] != '\n')
-			{
-				frac *= 10.0f;
-				scale *= 10.0f;
-				frac += ASCII_TO_INT(buff[index]);
-				index++;
-			}
-			num += frac / scale;
-			*(data + size) = sign * num + 0.0 * I;
-			size++;
-		}
-	}
-	fclose(fp);
-
-	DFT(data, freq, size);
-
-	fp = fopen("Test DFT.csv", "w");
-	if (fp != NULL)
+    while (fgets(buff, BUFFER_SIZE, fp))
+    {
+	int index = 0;
+	double sign = 1.0f;
+	while (index < BUFFER_SIZE && buff[index] != ' ')
 	{
-		double fs = 1000.0;
-		fprintf(fp, "Index, Real, Imaginary\n");
-		for (int i = 0; i < size; i++)
-		{
-			fprintf(fp, "%lf, %lf, %lf\n", i * fs / 100, creal(*(freq + i)), cimag(*(freq + i)));
-            //fprintf(fp, "%lf, %lf, %lf\n", i * fs / 100, cabs(*(freq + i)), carg(*(freq + i)));
-		}
+	    index++;
 	}
-	fclose(fp);
+	index++;
 
-	free(data);
+	if (buff[index] == '-')
+	{
+	    sign = -1.0f;
+	    index++;
+	}
+
+	double num = 0.0f;
+	while (index < BUFFER_SIZE && IS_ASCII_INT(buff[index]) && buff[index] != '\n')
+	{
+	    num *= 10.0f;
+	    num += ASCII_TO_INT(buff[index]);
+	    index++;
+	}
+	index++;
+	double frac = 0.0f;
+	double scale = 1.0f;
+	while (index < BUFFER_SIZE && IS_ASCII_INT(buff[index]) && buff[index] != '\n')
+	{
+	    frac *= 10.0f;
+	    scale *= 10.0f;
+	    frac += ASCII_TO_INT(buff[index]);
+	    index++;
+	}
+	num += frac / scale;
+	*(*data + size) = sign * num + 0.0 * I;
+	size++;
+    }
+    fclose(fp);
+
+    return size;
+}
+
+int write_output(const char *filename, const double complex *data, int size)
+{
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL)
+    {
+	printf("ERROR :: Failed to open output file for writing\n");
+	fclose(fp);
+	return 0;
+    }
+    double fs = 1000.0;
+    fprintf(fp, "Index, Real, Imaginary\n");
+    for (int i = 0; i < size; i++)
+    {
+	fprintf(fp, "%lf, %lf, %lf\n", i * fs / 100, creal(*(data + i)), cimag(*(data + i)));
+	//fprintf(fp, "%lf, %lf, %lf\n", i * fs / 100, cabs(*(data + i)), carg(*(data + i)));
+    }
+    fclose(fp);
+    return 1;
+}
+
+int main (void)
+{
+    int size = 0;
+    double complex *data = NULL;
+    double complex *freq = NULL;
+
+    size = alloc_csv_data("../signal-generator/Test Data.csv", &data);
+    freq = calloc(size, sizeof(double complex));	
+    
+    if(data == NULL || freq == NULL)
+    {
+	printf("ERROR :: Failed to allocate memory\n");
+	return 0;
+    }
+    
+    DFT(data, freq, size);
+    write_output("DFT.csv", freq, size);
+
+    free(data);
+    free(freq);
+
+    return 1;
 }
