@@ -30,14 +30,14 @@ int regex_test(char *pattern, char *string)
     return 1;
 }
 
-double complex nth_root (int n, int N)
+double complex nth_root (const int n, const int N)
 {
     //double pi = acos(-1);
     double angle = 2.0f * M_PI * n / N;
     return cos(angle) - sin(angle) * I;
 }
 
-void DFT (double complex *time, double complex *freq, int N)
+void DFT (const double complex *time, double complex *freq, const int N)
 {	
     for (int k = 0; k < N; k++)
     {
@@ -46,6 +46,19 @@ void DFT (double complex *time, double complex *freq, int N)
 	{
 	    *(freq + k) += *(time + n) * nth_root(n*k, N);
 	}
+    }
+}
+
+void inverse_DFT (double complex *time, const double complex *freq, const int N)
+{
+    for (int n = 0; n < N; n++)
+    {
+	*(time + n) = 0.0 + 0.0 * I;
+	for (int k = 0; n < N; n++)
+	{
+	    *(time + n) += *(freq + k) * nth_root(-n*k, N);
+	}
+	*(time + n) /= N;
     }
 }
 
@@ -149,6 +162,9 @@ int main (void)
     
     DFT(data, freq, size);
     write_output("DFT.csv", freq, size);
+
+    inverse_DFT(data, freq, size);
+    write_output("inverse DFT.csv", data, size);
 
     free(data);
     free(freq);
