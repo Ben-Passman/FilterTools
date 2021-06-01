@@ -37,6 +37,7 @@ double complex nth_root (const int n, const int N)
     return cos(angle) - sin(angle) * I;
 }
 
+// Naiive implementation
 void DFT (const double complex *time, double complex *freq, const int N)
 {	
     for (int k = 0; k < N; k++)
@@ -44,7 +45,7 @@ void DFT (const double complex *time, double complex *freq, const int N)
 	*(freq + k) = 0.0 + 0.0 * I;
 	for (int n = 0; n < N; n++)
 	{
-	    *(freq + k) += *(time + n) * nth_root(n*k, N);
+	    *(freq + k) += *(time + n) * nth_root(-n*k, N);
 	}
     }
 }
@@ -54,9 +55,9 @@ void inverse_DFT (double complex *time, const double complex *freq, const int N)
     for (int n = 0; n < N; n++)
     {
 	*(time + n) = 0.0 + 0.0 * I;
-	for (int k = 0; n < N; n++)
+	for (int k = 0; k < N; k++)
 	{
-	    *(time + n) += *(freq + k) * nth_root(-n*k, N);
+	    *(time + n) += *(freq + k) * nth_root(n*k, N);
 	}
 	*(time + n) /= N;
     }
@@ -159,7 +160,7 @@ int main (void)
 	printf("ERROR :: Failed to allocate memory\n");
 	return 0;
     }
-    
+
     DFT(data, freq, size);
     write_output("DFT.csv", freq, size);
 
